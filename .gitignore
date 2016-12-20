@@ -1,4 +1,5 @@
 build/
+build_deps/
 node_modules/
 .DS_Store
 .*.swp

@@ -1,10 +1,22 @@
 #include <iostream>
 #include "parquet_reader.h"
 
-v8::Persistent<v8::Function> ParquetReader::constructor;
+using v8::Context;
+using v8::Function;
+using v8::FunctionTemplate;
+using v8::FunctionCallbackInfo;
+using v8::Isolate;
+using v8::Local;
+using v8::Number;
+using v8::Object;
+using v8::Persistent;
+using v8::String;
+using v8::Value;
 
-ParquetReader::ParquetReader(const v8::FunctionCallbackInfo<v8::Value>& args) : pr_(NULL) {
-	v8::String::Utf8Value param1(args[0]->ToString());
+Persistent<Function> ParquetReader::constructor;
+
+ParquetReader::ParquetReader(const FunctionCallbackInfo<Value>& args) : pr_(nullptr) {
+	String::Utf8Value param1(args[0]->ToString());
 	std::string from = std::string(*param1);
 
 	pr_ = parquet::ParquetFileReader::OpenFile(from);
@@ -13,44 +25,58 @@ ParquetReader::ParquetReader(const v8::FunctionCallbackInfo<v8::Value>& args) : 
 
 ParquetReader::~ParquetReader() {}
 
-void ParquetReader::Init(v8::Isolate* isolate) {
-	v8::Local<v8::FunctionTemplate> tpl = v8::FunctionTemplate::New(isolate, New);
+void ParquetReader::Init(Isolate* isolate) {
+	Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
 
-	tpl->SetClassName(v8::String::NewFromUtf8(isolate, "ParquetReader"));
+	tpl->SetClassName(String::NewFromUtf8(isolate, "ParquetReader"));
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 	NODE_SET_PROTOTYPE_METHOD(tpl, "info", Info);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "debugPrint", DebugPrint);
 
 	constructor.Reset(isolate, tpl->GetFunction());
 }
 
-void ParquetReader::New(const v8::FunctionCallbackInfo<v8::Value>& args) {
+void ParquetReader::New(const FunctionCallbackInfo<Value>& args) {
 	ParquetReader* obj = new ParquetReader(args);
 	obj->Wrap(args.This());
 
 	args.GetReturnValue().Set(args.This());
 }
 
-void ParquetReader::NewInstance(const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::Isolate* isolate = args.GetIsolate();
+void ParquetReader::NewInstance(const FunctionCallbackInfo<Value>& args) {
+  Isolate* isolate = args.GetIsolate();
   const unsigned argc = 1;
-  v8::Local<v8::Value> argv[argc] = { args[0] };
-  v8::Local<v8::Function> cons = v8::Local<v8::Function>::New(isolate, constructor);
-  v8::Local<v8::Context> context = isolate->GetCurrentContext();
-  v8::Local<v8::Object> instance = cons->NewInstance(context, argc, argv).ToLocalChecked();
+  Local<Value> argv[argc] = { args[0] };
+  Local<Function> cons = Local<Function>::New(isolate, constructor);
+  Local<Context> context = isolate->GetCurrentContext();
+  Local<Object> instance = cons->NewInstance(context, argc, argv).ToLocalChecked();
 
   args.GetReturnValue().Set(instance);
 }
 
-void ParquetReader::Info(const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::Isolate* isolate = args.GetIsolate();
-  v8::Local<v8::String> name;
+void ParquetReader::DebugPrint(const FunctionCallbackInfo<Value>& args) {
+  Isolate* isolate = args.GetIsolate();
+  ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(args.Holder());
   std::list<int> columns;
   bool print_values = true;
 
-  ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(args.Holder());
   obj->pr_->DebugPrint(std::cout, columns, print_values);
+  args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Hello"));
+}
 
-  //args.GetReturnValue().Set(name);
-  args.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, "Hello"));
+void ParquetReader::Info(const FunctionCallbackInfo<Value>& args) {
+  Isolate* isolate = args.GetIsolate();
+  ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(args.Holder());
+  const parquet::FileMetaData* file_metadata = obj->pr_->metadata();
+  Local<Object> res = Object::New(isolate);
+  std::string s(file_metadata->created_by());
+
+  res->Set(String::NewFromUtf8(isolate, "version"), Number::New(isolate, file_metadata->version()));
+  res->Set(String::NewFromUtf8(isolate, "createdBy"), String::NewFromUtf8(isolate, s.c_str()));
+  res->Set(String::NewFromUtf8(isolate, "rowGroups"), Number::New(isolate, file_metadata->num_row_groups()));
+  res->Set(String::NewFromUtf8(isolate, "columns"), Number::New(isolate, file_metadata->num_columns()));
+  res->Set(String::NewFromUtf8(isolate, "rows"), Number::New(isolate, file_metadata->num_rows()));
+
+  args.GetReturnValue().Set(res);
 }

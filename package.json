@@ -4,12 +4,13 @@
   "description": "Parquet is a columnar storage format",
   "main": "index.js",
   "scripts": {
+    "preinstall": "./build_parquet-cpp.sh",
+    "install": "node-gyp rebuild",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "gypfile": true,
   "dependencies": {
   }
 }
