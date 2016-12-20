@@ -1,0 +1,15 @@
+{
+  "name": "node-parquet",
+  "version": "1.0.0",
+  "description": "Parquet is a columnar storage format",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "gypfile": true,
+  "dependencies": {
+  }
+}

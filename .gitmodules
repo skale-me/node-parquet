@@ -1,0 +1,3 @@
+[submodule "deps/parquet-cpp"]
+	path = deps/parquet-cpp
+	url = https://github.com/apache/parquet-cpp
