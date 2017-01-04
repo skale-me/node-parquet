@@ -1,15 +1,15 @@
-#include <node.h>
+#include <nan.h>
 
 #include "parquet_reader.h"
 
-void CreateReader(const v8::FunctionCallbackInfo<v8::Value>& args) {
+void CreateReader(const Nan::FunctionCallbackInfo<v8::Value>& args) {
 	ParquetReader::NewInstance(args);
 }
 
-void Init(v8::Local<v8::Object> exports) {
-	ParquetReader::Init(exports->GetIsolate());
+void Init(v8::Local<v8::Object> exports, v8::Local<v8::Object> module) {
+	ParquetReader::Init(exports);
 
-	NODE_SET_METHOD(exports, "createReader", CreateReader);
+	Nan::SetMethod(module, "exports", CreateReader);
 }
 
 NODE_MODULE(parquet, Init)

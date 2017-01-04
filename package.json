@@ -12,5 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "nan": "^2.5.0"
   }
 }

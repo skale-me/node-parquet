@@ -6,7 +6,10 @@
 	  	'src/parquet_binding.cc',
 	  	'src/parquet_reader.cc',
 	  ],
-	  'include_dirs': [ 'deps/parquet-cpp/src' ],
+	  'include_dirs': [
+      "deps/parquet-cpp/src",
+      "<!(node -e \"require('nan')\")"
+    ],
 	  'libraries': [
 	  	'-Wl,-rpath,build_deps/parquet-cpp/release',
 		'-L../build_deps/parquet-cpp/release',
