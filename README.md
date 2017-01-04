@@ -6,6 +6,8 @@ available to any project in the Hadoop ecosystem. This nodejs module
 provides native bindings to the parquet functions from
 [parquet-cpp](https://github.com/apache/parquet-cpp).
 
+This module is in progress, not ready for use yet.
+
 ## Build
 
 ```shell
