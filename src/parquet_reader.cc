@@ -16,11 +16,11 @@ using v8::Value;
 Nan::Persistent<Function> ParquetReader::constructor;
 
 ParquetReader::ParquetReader(const Nan::FunctionCallbackInfo<Value>& args) : pr_(nullptr) {
-	String::Utf8Value param1(args[0]->ToString());
-	std::string from = std::string(*param1);
+  String::Utf8Value param1(args[0]->ToString());
+  std::string from = std::string(*param1);
 
-	pr_ = parquet::ParquetFileReader::OpenFile(from);
-	std::cout << "from: " << from << std::endl;
+  pr_ = parquet::ParquetFileReader::OpenFile(from);
+  std::cout << "from: " << from << std::endl;
 }
 
 ParquetReader::~ParquetReader() {}
@@ -28,25 +28,25 @@ ParquetReader::~ParquetReader() {}
 void ParquetReader::Init(Local<Object> exports) {
   Nan::HandleScope scope;
 
-	Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
+  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
 
-	tpl->SetClassName(Nan::New("ParquetReader").ToLocalChecked());
-	tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  tpl->SetClassName(Nan::New("ParquetReader").ToLocalChecked());
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-	Nan::SetPrototypeMethod(tpl, "info", Info);
-	Nan::SetPrototypeMethod(tpl, "debugPrint", DebugPrint);
-	Nan::SetPrototypeMethod(tpl, "readSync", ReadSync);
+  Nan::SetPrototypeMethod(tpl, "info", Info);
+  Nan::SetPrototypeMethod(tpl, "debugPrint", DebugPrint);
+  Nan::SetPrototypeMethod(tpl, "readSync", ReadSync);
 
-	constructor.Reset(tpl->GetFunction());
-	constructor.Reset(tpl->GetFunction());
+  constructor.Reset(tpl->GetFunction());
+  constructor.Reset(tpl->GetFunction());
   exports->Set(Nan::New("ParquetReader").ToLocalChecked(), tpl->GetFunction());
 }
 
 void ParquetReader::New(const Nan::FunctionCallbackInfo<Value>& args) {
-	ParquetReader* obj = new ParquetReader(args);
-	obj->Wrap(args.This());
+  ParquetReader* obj = new ParquetReader(args);
+  obj->Wrap(args.This());
 
-	args.GetReturnValue().Set(args.This());
+  args.GetReturnValue().Set(args.This());
 }
 
 void ParquetReader::NewInstance(const Nan::FunctionCallbackInfo<Value>& args) {
