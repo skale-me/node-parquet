@@ -8,12 +8,14 @@
 	  ],
 	  'include_dirs': [
       "deps/parquet-cpp/src",
+	  "build_deps/parquet-cpp/thirdparty/installed/include",
       "<!(node -e \"require('nan')\")"
     ],
 	  'libraries': [
 	  	'-Wl,-rpath,build_deps/parquet-cpp/release',
 		'-L../build_deps/parquet-cpp/release',
 		'-lparquet',
+		'-Wl,-rpath,build_deps/parquet-cpp/thirdparty/installed/lib',
 	  ],
 	  'cflags!': [ '-fno-exceptions' ],
 	  'cflags_cc!': [ '-fno-exceptions' ],

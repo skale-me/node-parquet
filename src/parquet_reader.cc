@@ -16,8 +16,8 @@ using v8::Value;
 
 Nan::Persistent<Function> ParquetReader::constructor;
 
-ParquetReader::ParquetReader(const Nan::FunctionCallbackInfo<Value>& args) : pr_(nullptr) {
-  String::Utf8Value param1(args[0]->ToString());
+ParquetReader::ParquetReader(const Nan::FunctionCallbackInfo<Value>& info) : pr_(nullptr) {
+  String::Utf8Value param1(info[0]->ToString());
   std::string from = std::string(*param1);
 
   pr_ = parquet::ParquetFileReader::OpenFile(from);
@@ -44,11 +44,11 @@ void ParquetReader::Init(Local<Object> exports) {
   exports->Set(Nan::New("ParquetReader").ToLocalChecked(), tpl->GetFunction());
 }
 
-void ParquetReader::New(const Nan::FunctionCallbackInfo<Value>& args) {
-  ParquetReader* obj = new ParquetReader(args);
-  obj->Wrap(args.This());
+void ParquetReader::New(const Nan::FunctionCallbackInfo<Value>& info) {
+  ParquetReader* obj = new ParquetReader(info);
+  obj->Wrap(info.This());
 
-  args.GetReturnValue().Set(args.This());
+  info.GetReturnValue().Set(info.This());
 }
 
 void ParquetReader::NewInstance(const Nan::FunctionCallbackInfo<Value>& info) {
@@ -69,7 +69,7 @@ void ParquetReader::DebugPrint(const Nan::FunctionCallbackInfo<Value>& info) {
 
 void ParquetReader::Info(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
-  const parquet::FileMetaData* file_metadata = obj->pr_->metadata();
+  std::shared_ptr<parquet::FileMetaData> file_metadata = obj->pr_->metadata();
   Local<Object> res = Nan::New<Object>();
   std::string s(file_metadata->created_by());
 
@@ -90,7 +90,7 @@ void ParquetReader::ReadSync(const Nan::FunctionCallbackInfo<Value>& info) {
   int rows_read;
   int64_t values_read;
   ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
-  const parquet::FileMetaData* file_metadata = obj->pr_->metadata();
+  std::shared_ptr<parquet::FileMetaData> file_metadata = obj->pr_->metadata();
   Local<Object> res = Nan::New<Object>();
   Nan::MaybeLocal<Object> buffer = Nan::NewBuffer(10 * 4);
   std::shared_ptr<parquet::RowGroupReader> row_group_reader = obj->pr_->RowGroup(0);
@@ -125,19 +125,14 @@ void ParquetReader::ReadSync(const Nan::FunctionCallbackInfo<Value>& info) {
 
 void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
-  const parquet::FileMetaData* file_metadata = obj->pr_->metadata();
+  std::shared_ptr<parquet::FileMetaData> file_metadata = obj->pr_->metadata();
   Local<Object> res = Nan::New<Object>();
   std::shared_ptr<parquet::RowGroupReader> row_group_reader = obj->pr_->RowGroup(0);
-
   int num_columns = file_metadata->num_columns();
-  int i;
 
-  for (i = 0; i < num_columns; i++) {
-    //const parquet::ColumnDescriptor* descr = file_metadata->schema()->Column(i);
-    //int type = descr->physical_type();
+  for (int i = 0; i < num_columns; i++) {
     int64_t values_read;
     std::shared_ptr<parquet::ColumnReader> column_reader = row_group_reader->Column(i);
-    //parquet::Type::type type = column_reader->type();
 
     //std::cout << "i: " << i << ", type: " << column_reader->type() << std::endl;
     switch (column_reader->type()) {
