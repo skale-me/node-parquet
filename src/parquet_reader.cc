@@ -130,75 +130,87 @@ void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
   std::shared_ptr<parquet::RowGroupReader> row_group_reader = obj->pr_->RowGroup(0);
   int num_columns = file_metadata->num_columns();
 
-  for (int i = 0; i < num_columns; i++) {
-    int64_t values_read;
-    std::shared_ptr<parquet::ColumnReader> column_reader = row_group_reader->Column(i);
+  if (!info[0]->IsNumber() || !info[1]->IsNumber()) {
+    Nan::ThrowTypeError("wrong argument");
+    return;
+  }
+  int nskip = info[0]->IntegerValue();
+  int nrows = info[1]->IntegerValue();
 
-    //std::cout << "i: " << i << ", type: " << column_reader->type() << std::endl;
-    switch (column_reader->type()) {
-      case parquet::Type::BOOLEAN: {
-        bool value;
-        parquet::BoolReader* reader = static_cast<parquet::BoolReader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::New<Boolean>(value));
-        break;
-      }
-      case parquet::Type::INT32: {
-        int32_t value;
-        parquet::Int32Reader* reader = static_cast<parquet::Int32Reader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
-        break;
-      }
-      case parquet::Type::INT64: {
-        int64_t value;
-        parquet::Int64Reader* reader = static_cast<parquet::Int64Reader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
-        break;
-      }
-      case parquet::Type::INT96: {
-        parquet::Int96 value;
-        parquet::Int96Reader* reader = static_cast<parquet::Int96Reader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.value, 12).ToLocalChecked());
-        break;
-      }
-      case parquet::Type::FLOAT: {
-        float value;
-        parquet::FloatReader* reader = static_cast<parquet::FloatReader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
-        break;
-      }
-      case parquet::Type::DOUBLE: {
-        double value;
-        parquet::DoubleReader* reader = static_cast<parquet::DoubleReader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
-        break;
-      }
-      case parquet::Type::BYTE_ARRAY: {
-        parquet::ByteArray value;
-        parquet::ByteArrayReader* reader = static_cast<parquet::ByteArrayReader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.ptr, value.len).ToLocalChecked());
-        break;
-      }
-      case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
-        parquet::FixedLenByteArray value;
-        parquet::FixedLenByteArrayReader* reader = static_cast<parquet::FixedLenByteArrayReader*>(column_reader.get());
-        reader->Skip(2);
-        reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-        res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.ptr, 1).ToLocalChecked());
-        break;
+  for (int l = 0; l < nrows; l++) {
+    Local<Object> row_res = Nan::New<Object>();
+
+    res->Set(Nan::New<Number>(nskip + l), row_res);
+    for (int i = 0; i < num_columns; i++) {
+      int64_t values_read;
+      std::shared_ptr<parquet::ColumnReader> column_reader = row_group_reader->Column(i);
+
+      //std::cout << "i: " << i << ", type: " << column_reader->type() << std::endl;
+      switch (column_reader->type()) {
+        case parquet::Type::BOOLEAN: {
+          bool value;
+          parquet::BoolReader* reader = static_cast<parquet::BoolReader*>(column_reader.get());
+          reader->Skip(nskip + l);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::New<Boolean>(value));
+          break;
+        }
+        case parquet::Type::INT32: {
+          int32_t value;
+          parquet::Int32Reader* reader = static_cast<parquet::Int32Reader*>(column_reader.get());
+          reader->Skip(nskip + l);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
+          break;
+        }
+        case parquet::Type::INT64: {
+          int64_t value;
+          parquet::Int64Reader* reader = static_cast<parquet::Int64Reader*>(column_reader.get());
+          reader->Skip(nskip + l);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
+          break;
+        }
+        case parquet::Type::INT96: {
+          parquet::Int96 value;
+          parquet::Int96Reader* reader = static_cast<parquet::Int96Reader*>(column_reader.get());
+          reader->Skip(nskip + l);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.value, 12).ToLocalChecked());
+          break;
+        }
+        case parquet::Type::FLOAT: {
+          float value;
+          parquet::FloatReader* reader = static_cast<parquet::FloatReader*>(column_reader.get());
+          reader->Skip(nskip + l);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
+          break;
+        }
+        case parquet::Type::DOUBLE: {
+          double value;
+          parquet::DoubleReader* reader = static_cast<parquet::DoubleReader*>(column_reader.get());
+          reader->Skip(nskip + l);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::New<Number>(value));
+          break;
+        }
+        case parquet::Type::BYTE_ARRAY: {
+          parquet::ByteArray value;
+          parquet::ByteArrayReader* reader = static_cast<parquet::ByteArrayReader*>(column_reader.get());
+          reader->Skip(2);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.ptr, value.len).ToLocalChecked());
+          break;
+        }
+        case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
+          parquet::FixedLenByteArray value;
+          parquet::FixedLenByteArrayReader* reader = static_cast<parquet::FixedLenByteArrayReader*>(column_reader.get());
+          reader->Skip(nskip + l);
+          reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
+          row_res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.ptr, 1).ToLocalChecked());
+          break;
+        }
       }
     }
   }
