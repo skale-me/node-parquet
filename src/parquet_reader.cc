@@ -40,7 +40,6 @@ void ParquetReader::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(tpl, "readline", Readline);
 
   constructor.Reset(tpl->GetFunction());
-  constructor.Reset(tpl->GetFunction());
   exports->Set(Nan::New("ParquetReader").ToLocalChecked(), tpl->GetFunction());
 }
 

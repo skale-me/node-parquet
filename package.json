@@ -6,12 +6,16 @@
   "scripts": {
     "preinstall": "./build_parquet-cpp.sh",
     "install": "node-gyp rebuild",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tap test/*.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "hexdump-nodejs": "^0.1.0",
     "nan": "^2.5.0"
+  },
+  "devDependencies": {
+    "tap": "^10.0.0"
   }
 }
