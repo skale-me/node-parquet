@@ -14,6 +14,8 @@
     ],
 	  'cflags!': [ '-fno-exceptions' ],
 	  'cflags_cc!': [ '-fno-exceptions' ],
+	  'cflags': [ '-std=c++11' ],
+	  'cflags_cc': [ '-std=c++11' ],
 	  'conditions': [
 	  	['OS=="mac"', {
 		  'xcode_settings': {
