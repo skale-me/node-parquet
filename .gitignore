@@ -1,5 +1,6 @@
 build/
 build_deps/
 node_modules/
+examples/t1.parquet
 .DS_Store
 .*.swp

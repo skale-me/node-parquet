@@ -197,7 +197,7 @@ void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
         case parquet::Type::BYTE_ARRAY: {
           parquet::ByteArray value;
           parquet::ByteArrayReader* reader = static_cast<parquet::ByteArrayReader*>(column_reader.get());
-          reader->Skip(2);
+          reader->Skip(nskip + l);
           reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
           row_res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.ptr, value.len).ToLocalChecked());
           break;

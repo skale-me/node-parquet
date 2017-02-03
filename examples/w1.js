@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var parquet = require('./build/Release/parquet');
+var parquet = require('../build/Release/parquet');
 console.log('parquet', parquet);
 
 var schema = {
@@ -11,7 +11,7 @@ var schema = {
   string: {type: 'byte_array'},
 };
 
-var f = parquet.createWriter('t1.parquet', schema);
+var f = parquet.createWriter(__dirname + '/t1.parquet', schema);
 console.log('f:', f);
 console.log('writeSync', f.writeSync([
   [3, , true, "hello" ],
