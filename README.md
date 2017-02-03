@@ -1,5 +1,7 @@
 # Node-parquet
 
+[![Build Status](https://travis-ci.org/mvertes/node-parquet.svg?branch=master)](https://travis-ci.org/mvertes/node-parquet)
+
 [Parquet](http://parquet.apache.org) is a [columnar
 storage](https://en.wikipedia.org/wiki/Column-oriented_DBMS) format
 available to any project in the Hadoop ecosystem. This nodejs module
