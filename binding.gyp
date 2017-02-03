@@ -42,6 +42,7 @@
 			'-L../build_deps/parquet-cpp/snappy_ep/src/snappy_ep-install/lib',
 			'-Wl,-rpath,build_deps/parquet-cpp/snappy_ep/src/snappy_ep-install/lib',
 			'-L../build_deps/parquet-cpp/brotli_ep/src/brotli_ep-install/lib',
+			'-L../build_deps/parquet-cpp/brotli_ep/src/brotli_ep-install/lib/x86_64-linux-gnu',
 			'-Wl,-rpath,build_deps/parquet-cpp/arrow_ep/src/arrow_ep-install/lib',
 			'-L../build_deps/parquet-cpp/arrow_ep/src/arrow_ep-install/lib',
 			'-lsnappy',
