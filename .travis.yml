@@ -5,4 +5,4 @@ node_js:
   - "0.12"
 before_install:
   - sudo apt-get update -q
-  - sudo apt-get install libboost-dev libboost-system-dev libboost-filesystem-dev -y
+  - sudo apt-get install bison libboost-dev libboost-system-dev libboost-filesystem-dev -y
