@@ -8,10 +8,10 @@ node_js:
 addons:
   apt:
     packages:
-	  - g++-4.9
+      - g++-4.9
 before_install:
   - sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev
 env:
   global:
     - CXX=g++-4.9
-	- NODE_ENV=development
+    - NODE_ENV=development
