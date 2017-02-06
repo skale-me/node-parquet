@@ -1,1 +1,1 @@
-modules.exports = require('./build/Release/parquet');
+module.exports = require('./build/Release/parquet');
