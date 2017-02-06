@@ -1,6 +1,6 @@
 {
   "name": "node-parquet",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Parquet is a columnar storage format",
   "main": "index.js",
   "scripts": {
@@ -9,8 +9,8 @@
     "test": "tap test/*.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Skale team",
+  "license": "Apache-2.0",
   "dependencies": {
     "hexdump-nodejs": "^0.1.0",
     "nan": "^2.5.0"
