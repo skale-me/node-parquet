@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var parquet = require('./lib/parquet.js');
+var parquet = require('../lib/parquet.js');
 
 //var reader = parquet.Reader('parquet_cpp_example.parquet');
 //var reader = parquet.Reader('alltypes_plain.parquet');

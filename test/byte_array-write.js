@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var t = require('tap');
-var parquet = require('../build/Release/parquet');
+var parquet = require('..');
 
 var schema = {ba: {type: 'byte_array'}};
 var writer = parquet.createWriter(__dirname + '/test.parquet', schema);
