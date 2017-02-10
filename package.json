@@ -8,7 +8,16 @@
     "install": "node-gyp rebuild",
     "test": "tap test/*.js"
   },
-  "keywords": [],
+  "repository": "skale-me/node-parquet",
+  "bugs": {
+    "url": "https://github.com/skale-me/node-parquet/issues"
+  },
+  "keywords": [
+    "big data",
+    "parquet",
+    "skale",
+    "ETL"
+  ],
   "author": "Skale team",
   "license": "Apache-2.0",
   "dependencies": {
