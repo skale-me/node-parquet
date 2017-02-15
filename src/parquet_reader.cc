@@ -2,6 +2,7 @@
 
 #include "parquet_reader.h"
 
+using v8::Array;
 using v8::Boolean;
 using v8::Context;
 using v8::Exception;
@@ -125,7 +126,8 @@ void ParquetReader::ReadSync(const Nan::FunctionCallbackInfo<Value>& info) {
 void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
   std::shared_ptr<parquet::FileMetaData> file_metadata = obj->pr_->metadata();
-  Local<Object> res = Nan::New<Object>();
+  //Local<Object> res = Nan::New<Object>();
+  Local<Array> res = Nan::New<Array>();
   std::shared_ptr<parquet::RowGroupReader> row_group_reader = obj->pr_->RowGroup(0);
   int num_columns = file_metadata->num_columns();
 
@@ -137,7 +139,8 @@ void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
   int nrows = info[1]->IntegerValue();
 
   for (int l = 0; l < nrows; l++) {
-    Local<Object> row_res = Nan::New<Object>();
+    //Local<Object> row_res = Nan::New<Object>();
+    Local<Array> row_res = Nan::New<Array>();
 
     res->Set(Nan::New<Number>(nskip + l), row_res);
     for (int i = 0; i < num_columns; i++) {
