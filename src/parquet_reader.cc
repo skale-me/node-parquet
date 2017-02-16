@@ -2,6 +2,7 @@
 
 #include "parquet_reader.h"
 
+using v8::Array;
 using v8::Boolean;
 using v8::Context;
 using v8::Exception;
@@ -21,7 +22,6 @@ ParquetReader::ParquetReader(const Nan::FunctionCallbackInfo<Value>& info) : pr_
   std::string from = std::string(*param1);
 
   pr_ = parquet::ParquetFileReader::OpenFile(from);
-  std::cout << "from: " << from << std::endl;
 }
 
 ParquetReader::~ParquetReader() {}
@@ -125,7 +125,8 @@ void ParquetReader::ReadSync(const Nan::FunctionCallbackInfo<Value>& info) {
 void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
   std::shared_ptr<parquet::FileMetaData> file_metadata = obj->pr_->metadata();
-  Local<Object> res = Nan::New<Object>();
+  //Local<Object> res = Nan::New<Object>();
+  Local<Array> res = Nan::New<Array>();
   std::shared_ptr<parquet::RowGroupReader> row_group_reader = obj->pr_->RowGroup(0);
   int num_columns = file_metadata->num_columns();
 
@@ -137,12 +138,14 @@ void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
   int nrows = info[1]->IntegerValue();
 
   for (int l = 0; l < nrows; l++) {
-    Local<Object> row_res = Nan::New<Object>();
+    //Local<Object> row_res = Nan::New<Object>();
+    Local<Array> row_res = Nan::New<Array>();
 
     res->Set(Nan::New<Number>(nskip + l), row_res);
     for (int i = 0; i < num_columns; i++) {
       int64_t values_read;
       std::shared_ptr<parquet::ColumnReader> column_reader = row_group_reader->Column(i);
+      parquet::LogicalType::type logical_type = column_reader->descr()->logical_type();
 
       //std::cout << "i: " << i << ", type: " << column_reader->type() << std::endl;
       switch (column_reader->type()) {
@@ -199,7 +202,11 @@ void ParquetReader::Readline(const Nan::FunctionCallbackInfo<Value>& info) {
           parquet::ByteArrayReader* reader = static_cast<parquet::ByteArrayReader*>(column_reader.get());
           reader->Skip(nskip + l);
           reader->ReadBatch(1, nullptr, nullptr, &value, &values_read);
-          row_res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.ptr, value.len).ToLocalChecked());
+          if (logical_type == parquet::LogicalType::UTF8) {
+            row_res->Set(Nan::New<Number>(i), Nan::New((char*)value.ptr, value.len).ToLocalChecked());
+          } else {
+            row_res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)value.ptr, value.len).ToLocalChecked());
+          }
           break;
         }
         case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
