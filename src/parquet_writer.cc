@@ -146,7 +146,8 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
     for (int i = 0; i < obj->ncols_; i++) {
       parquet::ColumnWriter *column_writer = rgw->NextColumn();
       const parquet::ColumnDescriptor *descr = column_writer->descr();
-      int16_t definition_level = descr->max_definition_level();
+      int16_t maxdef = descr->max_definition_level();
+      int16_t definition_level = maxdef;
       int16_t* definition = definition_level ? &definition_level : nullptr;
       Local<Object> row;
       Local<Value> val;
@@ -166,6 +167,7 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
             } else {
               input_value = val->BooleanValue();
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
@@ -183,6 +185,7 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
             } else {
               input_value = val->Int32Value();
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
@@ -200,6 +203,7 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
             } else {
               input_value = row->Get(i)->IntegerValue();
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
@@ -221,6 +225,7 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
               input_value.value[1] = buf[1];
               input_value.value[2] = buf[2];
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
@@ -238,6 +243,7 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
             } else {
               input_value = (float) val->NumberValue();
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
@@ -255,6 +261,7 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
             } else {
               input_value = val->NumberValue();
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
@@ -274,11 +281,13 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
               input_value.ptr = reinterpret_cast<const uint8_t*>(std::string(*val_utf8).c_str());
               input_value.len = val_utf8.length();
               value = &input_value;
+              definition_level = maxdef;
             } else if (val->IsObject()) {
               Local<Object> obj_value = Local<Object>::Cast(val);
               input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
               input_value.len = node::Buffer::Length(obj_value);
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
@@ -297,6 +306,7 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
               Local<Object> obj_value = Local<Object>::Cast(val);
               input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
               value = &input_value;
+              definition_level = maxdef;
             }
             writer->WriteBatch(1, definition, nullptr, value);
           }
