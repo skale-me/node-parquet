@@ -8,17 +8,16 @@
 class ParquetReader : public Nan::ObjectWrap {
   public:
     static void Init(v8::Local<v8::Object> exports);
-    static void NewInstance(const Nan::FunctionCallbackInfo<v8::Value>& args);
 
   private:
     ParquetReader(const Nan::FunctionCallbackInfo<v8::Value>& args);
     ~ParquetReader();
 
+    static void NewInstance(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static void New(const Nan::FunctionCallbackInfo<v8::Value>& args);
-    static void DebugPrint(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static void Info(const Nan::FunctionCallbackInfo<v8::Value>& args);
-    static void ReadSync(const Nan::FunctionCallbackInfo<v8::Value>& args);
-    static void Readline(const Nan::FunctionCallbackInfo<v8::Value>& args);
+    static void ReadColumn(const Nan::FunctionCallbackInfo<v8::Value>& args);
+    static void Close(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static Nan::Persistent<v8::Function> constructor;
 
     // Wrapped object
