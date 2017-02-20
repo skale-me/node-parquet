@@ -1,6 +1,8 @@
 #ifndef PARQUET_READER_H
 #define PARQUET_READER_H
 
+#include <vector>
+
 #include <nan.h>
 
 #include <parquet/api/reader.h>
@@ -20,8 +22,9 @@ class ParquetReader : public Nan::ObjectWrap {
     static void Close(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static Nan::Persistent<v8::Function> constructor;
 
-    // Wrapped object
-    std::unique_ptr<parquet::ParquetFileReader> pr_;
+    // Wrapped objects
+    std::unique_ptr<parquet::ParquetFileReader> parquet_file_reader_;
+    std::vector<std::shared_ptr<parquet::ColumnReader>> column_readers_;
 };
 
 #endif

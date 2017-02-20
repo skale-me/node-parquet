@@ -9,12 +9,12 @@
 class ParquetWriter : public Nan::ObjectWrap {
   public:
     static void Init(v8::Local<v8::Object> exports);
-    static void NewInstance(const Nan::FunctionCallbackInfo<v8::Value>& info);
 
   private:
     ParquetWriter(const Nan::FunctionCallbackInfo<v8::Value>& info);
     ~ParquetWriter();
 
+    static void NewInstance(const Nan::FunctionCallbackInfo<v8::Value>& info);
     static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
     static void WriteSync(const Nan::FunctionCallbackInfo<v8::Value>& info);
     static void Close(const Nan::FunctionCallbackInfo<v8::Value>& info);
