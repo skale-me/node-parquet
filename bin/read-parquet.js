@@ -15,10 +15,10 @@ var i, bloc;
 //console.log(reader.readline(0, 2));
 for (i = 0; i < nblocs; i++) {
   console.log('read ' + blocsize + ' from ' + i * blocsize);
-  bloc = reader.readRow(i * blocsize, blocsize);
+  bloc = reader.readRows(i * blocsize, blocsize);
   console.log(bloc);
 }
 if (lastsize) {
-  bloc = reader.readRow(i * blocsize, lastsize);
+  bloc = reader.readRows(i * blocsize, lastsize);
   console.log(bloc);
 }
