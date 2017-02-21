@@ -85,6 +85,7 @@ writer.close();
 - schemas for write are not yet documented
 - int64 bigger than 2^53 - 1 are not accaturately represented (bigint integration planned)
 - purejs implementation not complete
+- the native library parquet-cpp does not build on MS-windows
 
 ## License
 
