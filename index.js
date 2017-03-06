@@ -7,12 +7,14 @@ module.exports = parquet;
 parquet.ParquetReader.prototype.rows = function(nrows) {
   const info = this.info();
   nrows = nrows || info.rows;
-  const rows = new Array(nrows);
   var i, j, col, e;
 
   if (!this._last) this._last = [];
   if (!this._count) this._count = [];
+  if (this._remain === undefined) this._remain = info.rows;
+  if (nrows > this._remain) nrows = this._remain;
 
+  const rows = new Array(nrows);
   for (j = 0; j < info.columns; j++) {
     this._count[j] = 0;
   }
@@ -22,7 +24,6 @@ parquet.ParquetReader.prototype.rows = function(nrows) {
     for (j = 0; j < info.columns; j++) {
       if (this._last[j]) {
         col[j] = [this._last[j][2]];
-        //console.log('#1 row: ', i, 'col[', j, ']=', col[j], 'last:', this._last[j]);
         while (true) {
           this._last[j] = this.read(j);
           this._count[j]++;
@@ -33,7 +34,6 @@ parquet.ParquetReader.prototype.rows = function(nrows) {
         continue;
       }
       col[j] = this.read(j);
-      //console.log('#2 row: ', i, 'col[', j, ']=', col[j]);
       if (Array.isArray(col[j])) {
         this._last[j] = col[j];
         this._count[j]++;
@@ -48,6 +48,6 @@ parquet.ParquetReader.prototype.rows = function(nrows) {
       }
     }
   }
-  console.log(this._count);
+  this._remain -= nrows;
   return rows;
 };
