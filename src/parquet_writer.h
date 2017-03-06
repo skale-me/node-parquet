@@ -16,7 +16,7 @@ class ParquetWriter : public Nan::ObjectWrap {
 
     static void NewInstance(const Nan::FunctionCallbackInfo<v8::Value>& info);
     static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
-    static void WriteSync(const Nan::FunctionCallbackInfo<v8::Value>& info);
+    static void Write(const Nan::FunctionCallbackInfo<v8::Value>& info);
     static void Close(const Nan::FunctionCallbackInfo<v8::Value>& info);
     static Nan::Persistent<v8::Function> constructor;
 

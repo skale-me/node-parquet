@@ -115,7 +115,7 @@ void ParquetWriter::Init(Local<Object> exports) {
   tpl->SetClassName(Nan::New("ParquetWriter").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-  Nan::SetPrototypeMethod(tpl, "writeSync", WriteSync);
+  Nan::SetPrototypeMethod(tpl, "write", Write);
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
   constructor.Reset(tpl->GetFunction());
@@ -298,7 +298,7 @@ static writer_t type_writers[] = {
   write_flba
 };
 
-void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
+void ParquetWriter::Write(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetWriter* obj = ObjectWrap::Unwrap<ParquetWriter>(info.Holder());
 
   if (!info[0]->IsArray()) {
