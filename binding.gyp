@@ -20,6 +20,7 @@
 		   'GCC_ENABLE_CPP_EXCEPTIONS': 'YES'
 		  },
 		  'libraries': [
+      '-w',
 			'<(module_root_dir)/build_deps/parquet-cpp/release/libparquet.a',
 			'/usr/local/lib/libthrift.a',
 			'-L<(module_root_dir)/build_deps/parquet-cpp/snappy_ep/src/snappy_ep-install/lib',
@@ -33,6 +34,7 @@
 			'-lbrotlicommon',
 			'-larrow',
 			'-larrow_io',
+			'-lboost_regex',
 		  ],
 		},
 		'OS=="linux"', {
@@ -51,6 +53,7 @@
 			'-lbrotlicommon',
 			'-larrow',
 			'-larrow_io',
+			'-lboost_regex',
 		  ],
 		}]
 	  ]
