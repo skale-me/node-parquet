@@ -9,6 +9,8 @@ using parquet::Repetition;
 using parquet::Type;
 using parquet::schema::PrimitiveNode;
 using parquet::schema::GroupNode;
+using parquet::schema::NodePtr;
+using parquet::schema::Node;
 
 using v8::Array;
 using v8::Function;
@@ -20,7 +22,7 @@ using v8::Object;
 using v8::String;
 using v8::Value;
 
-static std::shared_ptr<GroupNode> SetupSchema(Local<Object> obj) {
+static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetition, Local<Object> obj) {
   parquet::schema::NodeVector fields;
   Local<Array> properties = obj->GetOwnPropertyNames();
   int len = properties->Length();
@@ -32,14 +34,14 @@ static std::shared_ptr<GroupNode> SetupSchema(Local<Object> obj) {
     Local<Value> type = value->Get(Nan::New("type").ToLocalChecked());
     Local<Value> optional = value->Get(Nan::New("optional").ToLocalChecked());
     Local<Value> repeat = value->Get(Nan::New("repeat").ToLocalChecked());
+    Local<Object> schema;
     String::Utf8Value type_utf8(type->ToString());
     std::string type_str = std::string(*type_utf8);
     std::string key_str = std::string(*key_utf8);
     Type::type parquet_type = Type::BOOLEAN;
+    LogicalType::type logical_type = LogicalType::NONE;
     Repetition::type repetition;
-
-    std::cout << "key: " << key_str << std::endl;
-    std::cout << "type: " << type_str << std::endl;
+    Node::type node_type = Node::PRIMITIVE;
 
     if (optional->BooleanValue()) {
       repetition = Repetition::OPTIONAL;
@@ -67,13 +69,21 @@ static std::shared_ptr<GroupNode> SetupSchema(Local<Object> obj) {
       parquet_type = Type::BYTE_ARRAY;
     } else if (type_str.compare("fixed_len_byte_array") == 0) {
       parquet_type = Type::FIXED_LEN_BYTE_ARRAY;
+    } else if (type_str.compare("group") == 0) {
+      node_type = Node::GROUP;
+    } else if (type_str.compare("list") == 0) {
+      node_type = Node::GROUP;
+      logical_type = LogicalType::LIST;
     }
-    fields.push_back(PrimitiveNode::Make(key_str, repetition, parquet_type, LogicalType::NONE));
+    if (node_type == Node::GROUP) {
+      schema = Local<Object>::Cast(value->Get(Nan::New("schema").ToLocalChecked()));
+      fields.push_back(SetupSchema(key_str, repetition, schema));
+    } else {
+      fields.push_back(PrimitiveNode::Make(key_str, repetition, parquet_type, logical_type));
+    }
   }
-//  std::cout << "schema length: " << properties->Length() << std::endl;
 
-  return std::static_pointer_cast<GroupNode>(
-    GroupNode::Make("schema", Repetition::REQUIRED, fields));
+  return GroupNode::Make(root_name, root_repetition, fields);
 }
 
 Nan::Persistent<Function> ParquetWriter::constructor;
@@ -82,7 +92,7 @@ ParquetWriter::ParquetWriter(const Nan::FunctionCallbackInfo<Value>& info) : pw_
   String::Utf8Value param1(info[0]->ToString());
   std::string to = std::string(*param1);
   Local<Object> param2 = Local<Object>::Cast(info[1]);
-  std::shared_ptr<GroupNode> schema = SetupSchema(param2);
+  std::shared_ptr<GroupNode> schema = std::static_pointer_cast<GroupNode>(SetupSchema("schema", Repetition::REQUIRED, param2));
   arrow::Status status = arrow::io::FileOutputStream::Open(to, &fw_);
   ncols_ = param2->GetOwnPropertyNames()->Length();
 
@@ -115,7 +125,6 @@ void ParquetWriter::Init(Local<Object> exports) {
 void ParquetWriter::New(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetWriter* obj = new ParquetWriter(info);
   obj->Wrap(info.This());
-
   info.GetReturnValue().Set(info.This());
 }
 
@@ -123,17 +132,175 @@ void ParquetWriter::NewInstance(const Nan::FunctionCallbackInfo<Value>& info) {
   const unsigned argc = 2;
   Local<Value> argv[argc] = { info[0], info[1] };
   Local<Function> cons = Nan::New<Function>(constructor);
-  info.GetReturnValue().Set(cons->NewInstance(argc, argv));
+  info.GetReturnValue().Set(Nan::NewInstance(cons, argc, argv).ToLocalChecked());
 }
 
 void ParquetWriter::Close(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetWriter* obj = ObjectWrap::Unwrap<ParquetWriter>(info.Holder());
-  obj->pw_->Close();
-  obj->fw_->Close();
+  try {
+    obj->pw_->Close();
+    obj->fw_->Close();
+  } catch (const std::exception& e) {
+    Nan::ThrowError(Nan::New(e.what()).ToLocalChecked());
+  }
 }
+
+static void write_bool(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::BoolWriter* writer = static_cast<parquet::BoolWriter*>(column_writer);
+  bool input_value;
+  bool* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else {
+    input_value = val->BooleanValue();
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+static void write_int32(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::Int32Writer* writer = static_cast<parquet::Int32Writer*>(column_writer);
+  int32_t input_value;
+  int32_t* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else {
+    input_value = val->Int32Value();
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+static void write_int64(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::Int64Writer* writer = static_cast<parquet::Int64Writer*>(column_writer);
+  int64_t input_value;
+  int64_t* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else {
+    input_value = val->IntegerValue();
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+static void write_int96(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::Int96Writer* writer = static_cast<parquet::Int96Writer*>(column_writer);
+  parquet::Int96 input_value;
+  parquet::Int96* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else {
+    Local<Object> obj_value = Local<Object>::Cast(val);
+    uint32_t* buf = (uint32_t*) node::Buffer::Data(obj_value);
+    input_value.value[0] = buf[0];
+    input_value.value[1] = buf[1];
+    input_value.value[2] = buf[2];
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+static void write_float(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::FloatWriter* writer = static_cast<parquet::FloatWriter*>(column_writer);
+  float input_value;
+  float* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else {
+    input_value = val->NumberValue();
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+static void write_double(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::DoubleWriter* writer = static_cast<parquet::DoubleWriter*>(column_writer);
+  double input_value;
+  double* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else {
+    input_value = val->NumberValue();
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::ByteArrayWriter* writer = static_cast<parquet::ByteArrayWriter*>(column_writer);
+  parquet::ByteArray input_value;
+  parquet::ByteArray* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else if (val->IsString()) {
+    String::Utf8Value val_utf8(val->ToString());
+    input_value.ptr = reinterpret_cast<const uint8_t*>(std::string(*val_utf8).c_str());
+    input_value.len = val_utf8.length();
+  } else if (val->IsObject()) {
+    Local<Object> obj_value = Local<Object>::Cast(val);
+    input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
+    input_value.len = node::Buffer::Length(obj_value);
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+static void write_flba(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+  parquet::FixedLenByteArrayWriter* writer = static_cast<parquet::FixedLenByteArrayWriter*>(column_writer);
+  parquet::FixedLenByteArray input_value;
+  parquet::FixedLenByteArray* value = &input_value;
+  int16_t zerodef = 0;
+  int16_t* cdef = def;
+
+  if (val->IsUndefined()) {
+    cdef = &zerodef;
+    value = nullptr;
+  } else {
+    Local<Object> obj_value = Local<Object>::Cast(val);
+    input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
+  }
+  writer->WriteBatch(1, cdef, rep, value);
+}
+
+typedef void (*writer_t)(parquet::ColumnWriter*, Local<Value>, int16_t*, int16_t*);
+
+// Table of writer functions, keep same ordering as parquet::Type
+static writer_t type_writers[] = {
+  write_bool,
+  write_int32,
+  write_int64,
+  write_int96,
+  write_float,
+  write_double,
+  write_byte_array,
+  write_flba
+};
 
 void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetWriter* obj = ObjectWrap::Unwrap<ParquetWriter>(info.Holder());
+
   if (!info[0]->IsArray()) {
     Nan::ThrowTypeError(Nan::New("Parameter is not an array").ToLocalChecked());
     return;
@@ -147,170 +314,24 @@ void ParquetWriter::WriteSync(const Nan::FunctionCallbackInfo<Value>& info) {
       parquet::ColumnWriter *column_writer = rgw->NextColumn();
       const parquet::ColumnDescriptor *descr = column_writer->descr();
       int16_t maxdef = descr->max_definition_level();
-      int16_t definition_level = maxdef;
-      int16_t* definition = definition_level ? &definition_level : nullptr;
+      int16_t maxrep = descr->max_repetition_level();
+      int16_t zerorep = 0;
       Local<Object> row;
       Local<Value> val;
+      writer_t type_writer = type_writers[column_writer->type()];
 
-      // FIXME: Handle repetition levels
-
-      switch (column_writer->type()) {
-        case parquet::Type::BOOLEAN: {
-          parquet::BoolWriter* writer = static_cast<parquet::BoolWriter*>(column_writer);
-          bool input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (val->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else {
-              input_value = val->BooleanValue();
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
+      for (int j = 0; j < num_rows; j++) {
+        row = Local<Array>::Cast(input->Get(j));
+        val = row->Get(i);
+        if (val->IsArray()) {
+          Local<Array> array = Local<Array>::Cast(val);
+          int len = array->Length();
+          type_writer(column_writer, array->Get(0), &maxdef, &zerorep);
+          for (int k = 1; k < len; k++) {
+            type_writer(column_writer, array->Get(k), &maxdef, &maxrep);
           }
-          break;
-        }
-        case parquet::Type::INT32: {
-          parquet::Int32Writer* writer = static_cast<parquet::Int32Writer*>(column_writer);
-          int32_t input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (val->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else {
-              input_value = val->Int32Value();
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
-          }
-          break;
-        }
-        case parquet::Type::INT64: {
-          parquet::Int64Writer* writer = static_cast<parquet::Int64Writer*>(column_writer);
-          int64_t input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (val->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else {
-              input_value = row->Get(i)->IntegerValue();
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
-          }
-          break;
-        }
-        case parquet::Type::INT96: {
-          parquet::Int96Writer* writer = static_cast<parquet::Int96Writer*>(column_writer);
-          parquet::Int96 input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (val->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else {
-              Local<Object> obj_value = Local<Object>::Cast(val);
-              uint32_t *buf = (uint32_t*) node::Buffer::Data(obj_value);
-              input_value.value[0] = buf[0];
-              input_value.value[1] = buf[1];
-              input_value.value[2] = buf[2];
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
-          }
-          break;
-        }
-        case parquet::Type::FLOAT: {
-          parquet::FloatWriter* writer = static_cast<parquet::FloatWriter*>(column_writer);
-          float input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (val->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else {
-              input_value = (float) val->NumberValue();
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
-          }
-          break;
-        }
-        case parquet::Type::DOUBLE: {
-          parquet::DoubleWriter* writer = static_cast<parquet::DoubleWriter*>(column_writer);
-          double input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (row->Get(i)->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else {
-              input_value = val->NumberValue();
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
-          }
-          break;
-        }
-        case parquet::Type::BYTE_ARRAY: {
-          parquet::ByteArrayWriter* writer = static_cast<parquet::ByteArrayWriter*>(column_writer);
-          parquet::ByteArray input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (val->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else if (val->IsString()) {
-              String::Utf8Value val_utf8(val->ToString());
-              input_value.ptr = reinterpret_cast<const uint8_t*>(std::string(*val_utf8).c_str());
-              input_value.len = val_utf8.length();
-              value = &input_value;
-              definition_level = maxdef;
-            } else if (val->IsObject()) {
-              Local<Object> obj_value = Local<Object>::Cast(val);
-              input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
-              input_value.len = node::Buffer::Length(obj_value);
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
-          }
-          break;
-        }
-        case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
-          parquet::FixedLenByteArrayWriter* writer = static_cast<parquet::FixedLenByteArrayWriter*>(column_writer);
-          parquet::FixedLenByteArray input_value, *value;
-          for (int j = 0; j < num_rows; j++) {
-            row = Local<Array>::Cast(input->Get(j));
-            val = row->Get(i);
-            if (row->Get(i)->IsUndefined()) {
-              definition_level = 0;
-              value = nullptr;
-            } else {
-              Local<Object> obj_value = Local<Object>::Cast(val);
-              input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
-              value = &input_value;
-              definition_level = maxdef;
-            }
-            writer->WriteBatch(1, definition, nullptr, value);
-          }
-          break;
+        } else {
+            type_writer(column_writer, val, &maxdef, nullptr);
         }
       }
     }
