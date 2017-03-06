@@ -7,5 +7,5 @@ var schema = {ba: {type: 'byte_array'}};
 var writer = new parquet.ParquetWriter(__dirname + '/test.parquet', schema);
 
 t.type(writer, 'object');
-writer.writeSync([[Buffer.from('hello')], ['world']]);
+writer.write([[Buffer.from('hello')], ['world']]);
 writer.close();
