@@ -49,7 +49,7 @@ void ParquetReader::Init(Local<Object> exports) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   Nan::SetPrototypeMethod(tpl, "info", Info);
-  Nan::SetPrototypeMethod(tpl, "readColumn", ReadColumn);
+  Nan::SetPrototypeMethod(tpl, "read", Read);
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
   constructor.Reset(tpl->GetFunction());
@@ -57,23 +57,16 @@ void ParquetReader::Init(Local<Object> exports) {
 }
 
 void ParquetReader::New(const Nan::FunctionCallbackInfo<Value>& info) {
-  if (info.IsConstructCall()) {
-    ParquetReader* obj = new ParquetReader(info);
-    obj->Wrap(info.This());
-    info.GetReturnValue().Set(info.This());
-  } else {
-    const int argc = 1;
-    Local<Value> argv[argc] = { info[0] };
-    Local<Function> cons = Nan::New<v8::Function>(constructor);
-    info.GetReturnValue().Set(cons->NewInstance(argc, argv));
-  }
+  ParquetReader* obj = new ParquetReader(info);
+  obj->Wrap(info.This());
+  info.GetReturnValue().Set(info.This());
 }
 
 void ParquetReader::NewInstance(const Nan::FunctionCallbackInfo<Value>& info) {
   const int argc = 1;
   Local<Value> argv[argc] = { info[0] };
   Local<Function> cons = Nan::New<v8::Function>(constructor);
-  info.GetReturnValue().Set(cons->NewInstance(argc, argv));
+  info.GetReturnValue().Set(Nan::NewInstance(cons, argc, argv).ToLocalChecked());
 }
 
 void ParquetReader::Info(const Nan::FunctionCallbackInfo<Value>& info) {
@@ -96,161 +89,124 @@ void ParquetReader::Close(const Nan::FunctionCallbackInfo<Value>& info) {
   obj->parquet_file_reader_->Close();
 }
 
-void ParquetReader::ReadColumn(const Nan::FunctionCallbackInfo<Value>& info) {
-  ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
-  std::shared_ptr<parquet::FileMetaData> file_metadata = obj->parquet_file_reader_->metadata();
-  Local<Array> res = Nan::New<Array>();
-
-  if (!info[0]->IsNumber() || !info[1]->IsNumber() || !info[2]->IsNumber()) {
-    Nan::ThrowTypeError("wrong argument");
+template <typename T, typename U, typename V>
+void reader(std::shared_ptr<parquet::ColumnReader> column_reader, int16_t maxdef, int16_t maxrep, const Nan::FunctionCallbackInfo<Value>& info) {
+  T reader = static_cast<T>(column_reader.get());
+  U value;
+  int64_t value_read;
+  int16_t definition;
+  int16_t repetition;
+  if (!reader->HasNext())
+    return;
+  reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
+  if (maxrep == 0) {
+    if (definition == maxdef)
+      info.GetReturnValue().Set(Nan::New<V>(value));
     return;
   }
-  int col = info[0]->IntegerValue();
-  int nskip = info[1]->IntegerValue();
-  int nrows = info[2]->IntegerValue();
-  //std::cout << "col: " << col << ", nskip: " << nskip << ", nrows: " << nrows << std::endl;
+  Local<Array> array = Nan::New<Array>(3);
+  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
+  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  if (definition == maxdef)
+    array->Set(Nan::New<Number>(2), Nan::New<V>(value));
+  info.GetReturnValue().Set(array);
+}
+
+template <>
+void reader<parquet::Int96Reader*, parquet::Int96, Number>(std::shared_ptr<parquet::ColumnReader> column_reader, int16_t maxdef, int16_t maxrep, const Nan::FunctionCallbackInfo<Value>& info) {
+  parquet::Int96Reader* reader = static_cast<parquet::Int96Reader*>(column_reader.get());
+  parquet::Int96 value;
+  int64_t value_read;
+  int16_t definition;
+  int16_t repetition;
+  if (!reader->HasNext())
+    return;
+  reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
+  if (maxrep == 0) {
+    if (definition == maxdef)
+      info.GetReturnValue().Set(Nan::CopyBuffer((char*)value.value, 12).ToLocalChecked());
+    return;
+  }
+  Local<Array> array = Nan::New<Array>(3);
+  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
+  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  if (definition == maxdef)
+    array->Set(Nan::New<Number>(2), Nan::CopyBuffer((char*)value.value, 12).ToLocalChecked());
+  info.GetReturnValue().Set(array);
+}
+
+template <>
+void reader<parquet::ByteArrayReader*, parquet::ByteArray, Number>(std::shared_ptr<parquet::ColumnReader> column_reader, int16_t maxdef, int16_t maxrep, const Nan::FunctionCallbackInfo<Value>& info) {
+  parquet::ByteArrayReader* reader = static_cast<parquet::ByteArrayReader*>(column_reader.get());
+  parquet::ByteArray value;
+  int64_t value_read;
+  int16_t definition;
+  int16_t repetition;
+  if (!reader->HasNext())
+    return;
+  reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
+  if (maxrep == 0) {
+    if (definition == maxdef)
+      info.GetReturnValue().Set(Nan::New((char*)value.ptr, value.len).ToLocalChecked());
+    return;
+  }
+  Local<Array> array = Nan::New<Array>(3);
+  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
+  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  if (definition == maxdef)
+    array->Set(Nan::New<Number>(2), Nan::New((char*)value.ptr, value.len).ToLocalChecked());
+  info.GetReturnValue().Set(array);
+}
+
+template <>
+void reader<parquet::FixedLenByteArrayReader*, parquet::FixedLenByteArray, Number>(std::shared_ptr<parquet::ColumnReader> column_reader, int16_t maxdef, int16_t maxrep, const Nan::FunctionCallbackInfo<Value>& info) {
+  parquet::FixedLenByteArrayReader* reader = static_cast<parquet::FixedLenByteArrayReader*>(column_reader.get());
+  parquet::FixedLenByteArray value;
+  int64_t value_read;
+  int16_t definition;
+  int16_t repetition;
+  if (!reader->HasNext())
+    return;
+  reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
+  if (maxrep == 0) {
+    if (definition == maxdef)
+      info.GetReturnValue().Set(Nan::New((char*)value.ptr, 1).ToLocalChecked());
+    return;
+  }
+  Local<Array> array = Nan::New<Array>(3);
+  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
+  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  if (definition == maxdef)
+    array->Set(Nan::New<Number>(2), Nan::New((char*)value.ptr, 1).ToLocalChecked());
+  info.GetReturnValue().Set(array);
+}
+
+typedef void (*reader_t)(std::shared_ptr<parquet::ColumnReader>, int16_t, int16_t, const Nan::FunctionCallbackInfo<Value>& info);
+
+// Table of parquet readers. Keep same order as in parquet::Type
+static reader_t type_readers[] = {
+  reader<parquet::BoolReader*, bool, Boolean>,
+  reader<parquet::Int32Reader*, int32_t, Number>,
+  reader<parquet::Int64Reader*, int64_t, Number>,
+  reader<parquet::Int96Reader*, parquet::Int96, Number>,
+  reader<parquet::FloatReader*, float, Number>,
+  reader<parquet::DoubleReader*, double, Number>,
+  reader<parquet::ByteArrayReader*, parquet::ByteArray, Number>,
+  reader<parquet::FixedLenByteArrayReader*, parquet::FixedLenByteArray, Number>,
+};
+
+// Read one column element.
+void ParquetReader::Read(const Nan::FunctionCallbackInfo<Value>& info) {
+  ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
+
   try {
+    int col = info[0]->IntegerValue();
     std::shared_ptr<parquet::ColumnReader> column_reader = obj->column_readers_[col];
     const parquet::ColumnDescriptor* descr = column_reader->descr();
-    parquet::LogicalType::type logical_type = descr->logical_type();
-    int16_t max_definition = descr->max_definition_level();
-    int16_t max_repetition = descr->max_repetition_level();
-    int64_t values_read;
-    int16_t definitions[nrows];
-    int16_t repetitions[nrows];
-    int i = 0, j = 0;
-
-    //std::cout << "name: " << descr->name() << std::endl;
-    //std::cout << "path: " << descr->path()->ToDotString() << std::endl;
-    //std::cout << "max_def: " << descr->max_definition_level() << std::endl;
-    //std::cout << "max_rep: " << descr->max_repetition_level() << std::endl;
-    switch (column_reader->type()) {
-      case parquet::Type::BOOLEAN: {
-        bool values[nrows];
-        parquet::BoolReader* reader = static_cast<parquet::BoolReader*>(column_reader.get());
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, values, &values_read);
-        for (i = 0; i < nrows; i++)
-          if (definitions[i] == max_definition)
-            res->Set(Nan::New<Number>(i), Nan::New<Boolean>(values[j++]));
-        break;
-      }
-      case parquet::Type::INT32: {
-        int32_t values[nrows];
-        parquet::Int32Reader* reader = static_cast<parquet::Int32Reader*>(column_reader.get());
-        //if (nskip)
-        //  reader->Skip(nskip);
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, values, &values_read);
-        for (i = 0; i < nrows; i++)
-          if (definitions[i] == max_definition)
-            res->Set(Nan::New<Number>(i), Nan::New<Number>(values[j++]));
-        break;
-      }
-      case parquet::Type::INT64: {
-        int64_t values[nrows];
-        parquet::Int64Reader* reader = static_cast<parquet::Int64Reader*>(column_reader.get());
-
-        //if (nskip)
-        //  reader->Skip(nskip);
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, values, &values_read);
-        //std::cout << "value: " << values[0] << ", j: " << j << std::endl;
-        //if (col == 1)
-        //  std::cout << "def: " << definitions[i] << ", rep: " << repetitions[i] <<  std::endl;
-        for (i = 0; i < nrows; i++)
-          if (definitions[i] == max_definition)
-            res->Set(Nan::New<Number>(i), Nan::New<Number>(values[j++]));
-        break;
-      }
-      case parquet::Type::INT96: {
-        parquet::Int96 values[nrows];
-        parquet::Int96Reader* reader = static_cast<parquet::Int96Reader*>(column_reader.get());
-        //if (nskip)
-        //  reader->Skip(nskip);
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, values, &values_read);
-        for (i = 0; i < nrows; i++)
-          if (definitions[i] == max_definition)
-            res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)values[j++].value, 12).ToLocalChecked());
-        break;
-      }
-      case parquet::Type::FLOAT: {
-        float values[nrows];
-        parquet::FloatReader* reader = static_cast<parquet::FloatReader*>(column_reader.get());
-        //if (nskip)
-        //  reader->Skip(nskip);
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, values, &values_read);
-        for (i = 0; i < nrows; i++)
-          if (definitions[i] == max_definition)
-            res->Set(Nan::New<Number>(i), Nan::New<Number>(values[j++]));
-        break;
-      }
-      case parquet::Type::DOUBLE: {
-        double values[nrows];
-        parquet::DoubleReader* reader = static_cast<parquet::DoubleReader*>(column_reader.get());
-        //if (nskip)
-        //  reader->Skip(nskip);
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, values, &values_read);
-        for (i = 0; i < nrows; i++)
-          if (definitions[i] == max_definition)
-            res->Set(Nan::New<Number>(i), Nan::New<Number>(values[j++]));
-        break;
-      }
-      case parquet::Type::BYTE_ARRAY: {
-        std::vector<parquet::ByteArray> values(nrows);
-        parquet::ByteArrayReader* reader = static_cast<parquet::ByteArrayReader*>(column_reader.get());
-        //if (nskip)
-        //  reader->Skip(nskip);
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, &values[0], &values_read);
-        //if (max_repetition > 0) {   // Nested schema, return an array of values
-        //  Local<Array> record = Nan::New<Array>();
-        //  int k = 0;
-        //  int ri = 0;
-        //  for (i = 0; i < nrows; i++) {
-        //    if (repetitions[i] == 0) {
-        //      record = Nan::New<Array>();
-        //      res->Set(Nan::New<Number>(k++), record);
-        //      ri = 0;
-        //    }
-        //    record->Set(Nan::New<Number>(ri++), Nan::New((char*)values[j].ptr, values[j].len).ToLocalChecked());
-        //    j++;
-        //  }
-        //} else {                    // Flat schema, return a single value
-          for (i = 0; i < nrows; i++) {
-            if (definitions[i] == max_definition) {
-              //if (col > 6)
-              //  std::cout << "def: " << definitions[i] << ", rep: " << repetitions[i] <<  std::endl;
-              if (logical_type == parquet::LogicalType::UTF8) {
-                res->Set(Nan::New<Number>(i), Nan::New((char*)values[j].ptr, values[j].len).ToLocalChecked());
-              } else {
-                res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)values[j].ptr, values[j].len).ToLocalChecked());
-              }
-              j++;
-            }
-          }
-        //}
-        break;
-      }
-      case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
-        std::vector<parquet::FixedLenByteArray> values(nrows);
-        parquet::FixedLenByteArrayReader* reader = static_cast<parquet::FixedLenByteArrayReader*>(column_reader.get());
-        //if (nskip)
-        //  reader->Skip(nskip);
-        if (reader->HasNext())
-          reader->ReadBatch(nrows, definitions, repetitions, &values[0], &values_read);
-        for (i = 0; i < nrows; i++)
-          if (definitions[i] == max_definition)
-            res->Set(Nan::New<Number>(i), Nan::CopyBuffer((char*)values[j++].ptr, 1).ToLocalChecked());
-        break;
-      }
-    }
+    reader_t type_reader = type_readers[column_reader->type()];
+    type_reader(column_reader, descr->max_definition_level(), descr->max_repetition_level(), info);
   } catch (const std::exception& e) {
     Nan::ThrowError(Nan::New(e.what()).ToLocalChecked());
     return;
   }
-  info.GetReturnValue().Set(res);
 }

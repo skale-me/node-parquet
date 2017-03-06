@@ -18,7 +18,7 @@ class ParquetReader : public Nan::ObjectWrap {
     static void NewInstance(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static void New(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static void Info(const Nan::FunctionCallbackInfo<v8::Value>& args);
-    static void ReadColumn(const Nan::FunctionCallbackInfo<v8::Value>& args);
+    static void Read(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static void Close(const Nan::FunctionCallbackInfo<v8::Value>& args);
     static Nan::Persistent<v8::Function> constructor;
 

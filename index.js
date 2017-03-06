@@ -4,35 +4,50 @@ const parquet = require('./build/Release/parquet.node');
 
 module.exports = parquet;
 
-parquet.ParquetReader.prototype.readRows = function () {
+parquet.ParquetReader.prototype.rows = function(nrows) {
   const info = this.info();
-  const pow2 = 16;
-  const blocsize = 1 << pow2;
-  const nblocs = info.rows >>> pow2;
-  const lastsize = info.rows % blocsize;
-  const rows = new Array(info.rows);
-  var col, base, i, j, k;
+  nrows = nrows || info.rows;
+  const rows = new Array(nrows);
+  var i, j, col, e;
 
-  for (i = 0; i < nblocs; i++) {
-    base = i * blocsize;
-    for (k = 0; k < blocsize; k++)
-      rows[base + k] = new Array(info.columns);
+  if (!this._last) this._last = [];
+  if (!this._count) this._count = [];
+
+  for (j = 0; j < info.columns; j++) {
+    this._count[j] = 0;
+  }
+  for (i = 0; i < nrows; i++) {
+    rows[i] = new Array(info.columns);
+    col = rows[i];
     for (j = 0; j < info.columns; j++) {
-      col = this.readColumn(j, 0, blocsize);
-      for (k = 0; k < blocsize; k++) {
-        rows[base + k][j] = col[k];
+      if (this._last[j]) {
+        col[j] = [this._last[j][2]];
+        //console.log('#1 row: ', i, 'col[', j, ']=', col[j], 'last:', this._last[j]);
+        while (true) {
+          this._last[j] = this.read(j);
+          this._count[j]++;
+          if (!this._last[j] || this._last[j][1] === 0)
+            break;
+          col[j].push(this._last[j][2]);
+        }
+        continue;
+      }
+      col[j] = this.read(j);
+      //console.log('#2 row: ', i, 'col[', j, ']=', col[j]);
+      if (Array.isArray(col[j])) {
+        this._last[j] = col[j];
+        this._count[j]++;
+        col[j] = [this._last[j][2]];
+        while (true) {
+          this._last[j] = this.read(j);
+          this._count[j]++;
+          if (!this._last[j] || this._last[j][1] === 0)
+            break;
+          col[j].push(this._last[j][2]);
+        }
       }
     }
   }
-  if (!lastsize) return rows;
-  base = nblocs * blocsize;
-  for (k = 0; k < lastsize; k++)
-    rows[base + k] = new Array(info.columns);
-  for (j = 0; j < info.columns; j++) {
-    col = this.readColumn(j, 0, lastsize);
-    for (k = 0; k < lastsize; k++) {
-      rows[base + k][j] = col[k];
-    }
-  }
+  console.log(this._count);
   return rows;
 };
