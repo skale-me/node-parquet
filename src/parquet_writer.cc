@@ -4,6 +4,7 @@
 
 #include "parquet_writer.h"
 
+using parquet::Compression;
 using parquet::LogicalType;
 using parquet::Repetition;
 using parquet::Type;
@@ -11,6 +12,7 @@ using parquet::schema::PrimitiveNode;
 using parquet::schema::GroupNode;
 using parquet::schema::NodePtr;
 using parquet::schema::Node;
+using parquet::WriterProperties;
 
 using v8::Array;
 using v8::Function;
@@ -89,12 +91,38 @@ static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetiti
 Nan::Persistent<Function> ParquetWriter::constructor;
 
 ParquetWriter::ParquetWriter(const Nan::FunctionCallbackInfo<Value>& info) : pw_(nullptr), fw_(nullptr), ncols_(0) {
+  // Arguments sanity checks
+  if (info.Length() < 2) {
+    Nan::ThrowTypeError("Wrong number of arguments");
+    return;
+  }
+  if (!info[1]->IsObject()) {
+    Nan::ThrowTypeError("second argument is not an object");
+    return;
+  }
   String::Utf8Value param1(info[0]->ToString());
-  std::string to = std::string(*param1);
+  String::Utf8Value param3(info[2]->ToString());
   Local<Object> param2 = Local<Object>::Cast(info[1]);
   std::shared_ptr<GroupNode> schema = std::static_pointer_cast<GroupNode>(SetupSchema("schema", Repetition::REQUIRED, param2));
-  arrow::Status status = arrow::io::FileOutputStream::Open(to, &fw_);
+  arrow::Status status = arrow::io::FileOutputStream::Open(std::string(*param1), &fw_);
   ncols_ = param2->GetOwnPropertyNames()->Length();
+  Compression::type compression;
+  std::string comp_str(*param3);
+  if (comp_str.compare("snappy") == 0) {
+    compression = Compression::SNAPPY;
+  } else if (comp_str.compare("gzip") == 0) {
+    compression = Compression::GZIP;
+  } else if (comp_str.compare("lzo") == 0) {
+    compression = Compression::LZO;
+  } else if (comp_str.compare("brotli") == 0) {
+    compression = Compression::BROTLI;
+  } else if (comp_str.compare("undefined") == 0) {
+    compression = Compression::UNCOMPRESSED;
+  } else {
+    Nan::ThrowTypeError("Wrong compression type");
+    return;
+  }
+  std::shared_ptr<WriterProperties> writer_properties = WriterProperties::Builder().compression(compression)->build();
 
   if (!status.ok()) {
     std::stringstream ss;
@@ -103,7 +131,7 @@ ParquetWriter::ParquetWriter(const Nan::FunctionCallbackInfo<Value>& info) : pw_
     return;
   }
   try {
-    pw_ = parquet::ParquetFileWriter::Open(fw_, schema);
+    pw_ = parquet::ParquetFileWriter::Open(fw_, schema, writer_properties);
   } catch (const std::exception& e) {
     Nan::ThrowError(Nan::New(e.what()).ToLocalChecked());
   }
