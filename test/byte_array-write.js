@@ -4,7 +4,7 @@ var t = require('tap');
 var parquet = require('..');
 
 var schema = {ba: {type: 'byte_array'}};
-var writer = new parquet.ParquetWriter(__dirname + '/test.parquet', schema);
+var writer = new parquet.ParquetWriter(__dirname + '/test.parquet', schema, 'gzip');
 
 t.type(writer, 'object');
 writer.write([

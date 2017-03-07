@@ -127,7 +127,7 @@ Return an `Array` of rows, where each row is itself an `Array` of column element
 
 `ParquetWriter` object implements write operation on a parquet file.
 
-#### new parquet.ParquetWriter(filename, schema)
+#### new parquet.ParquetWriter(filename, schema, [compression])
 
 Construct a new parquet writer object.
 
@@ -144,6 +144,7 @@ Construct a new parquet writer object.
   * `"optional"`: `Boolean` indicating if the field can be omitted in a record. Default: `false`.
   * `"repeated"`: `Boolean` indicating if the field can be repeated in a record, thus forming an array. Ignored if not defined within a schema of type `"group"` (schema itself or one of its parent).
   * `"schema"`: `Object` which content is a `schema` defining the nested structure. Required for objects where type is `"group"`, ignored for others.
+* `compression`: optional `String` indicating the compression algorithm to apply to columns. Can be one of `"snappy"`, `"gzip"`, `"brotli"` or `"lzo"`. By default compression is disabled.
 
 For example, considering the following object: `{ name: "foo", content: [ 1, 2, 3] }`, its descriptor schema is:
 
