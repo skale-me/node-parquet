@@ -1,6 +1,6 @@
 {
   "name": "node-parquet",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Parquet is a columnar storage format",
   "main": "index.js",
   "scripts": {

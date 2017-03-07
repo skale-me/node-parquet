@@ -1,5 +1,27 @@
 # Change Log
 
+## [0.2.0](https://github.com/skale-me/node-parquet/tree/0.2.0) (2017-03-07)
+[Full Changelog](https://github.com/skale-me/node-parquet/compare/0.1.1...0.2.0)
+
+**Merged pull requests:**
+
+- write enable optional compression: gzip, snappy, brotli or lzo [\#15](https://github.com/skale-me/node-parquet/pull/15) ([mvertes](https://github.com/mvertes))
+- writer: fix string encoding [\#14](https://github.com/skale-me/node-parquet/pull/14) ([mvertes](https://github.com/mvertes))
+- Document API [\#13](https://github.com/skale-me/node-parquet/pull/13) ([mvertes](https://github.com/mvertes))
+- rename writer.writeSync to writer.write before next release [\#12](https://github.com/skale-me/node-parquet/pull/12) ([mvertes](https://github.com/mvertes))
+- reader.read\(\): Fix handling of remaining rows [\#11](https://github.com/skale-me/node-parquet/pull/11) ([mvertes](https://github.com/mvertes))
+- Fix nested columns at read and write. Code cleaning [\#10](https://github.com/skale-me/node-parquet/pull/10) ([mvertes](https://github.com/mvertes))
+- update parquet-cpp [\#9](https://github.com/skale-me/node-parquet/pull/9) ([mvertes](https://github.com/mvertes))
+- Fix reading [\#8](https://github.com/skale-me/node-parquet/pull/8) ([mvertes](https://github.com/mvertes))
+- fix performance at read [\#7](https://github.com/skale-me/node-parquet/pull/7) ([mvertes](https://github.com/mvertes))
+- writer: fix a bug where values were ignored after null [\#5](https://github.com/skale-me/node-parquet/pull/5) ([mvertes](https://github.com/mvertes))
+- js reader: fix file metadata schema parse [\#4](https://github.com/skale-me/node-parquet/pull/4) ([mvertes](https://github.com/mvertes))
+- reader: return arrays instead of objects, handle UTF8 strings [\#3](https://github.com/skale-me/node-parquet/pull/3) ([mvertes](https://github.com/mvertes))
+- update parquet-cpp dependency [\#2](https://github.com/skale-me/node-parquet/pull/2) ([mvertes](https://github.com/mvertes))
+
+## [0.1.1](https://github.com/skale-me/node-parquet/tree/0.1.1) (2017-02-10)
+[Full Changelog](https://github.com/skale-me/node-parquet/compare/0.1.0...0.1.1)
+
 ## [0.1.0](https://github.com/skale-me/node-parquet/tree/0.1.0) (2017-02-10)
 **Merged pull requests:**
 
