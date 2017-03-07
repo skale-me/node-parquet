@@ -181,7 +181,7 @@ writer.write([
 
 - no schema extract at reading yet
 - int64 bigger than 2^53 - 1 are not accaturately represented (big number library like [bignum](https://www.npmjs.com/package/bignum) integration planned)
-- purejs implementation not complete
+- purejs implementation not complete, although most of metadata is now correctly parsed.
 - read and write are only synchronous
 - Compression at write is not supported yet (although possible through parquet-cpp)
 - the native library parquet-cpp does not build on MS-Windows
@@ -189,7 +189,7 @@ writer.write([
 - benchmarks are missing
 - neat commmand line tool missing
 
-We plan to improve this over time. Contributions are welcome.
+Plan is to improve this over time. Contributions are welcome.
 
 ## License
 
