@@ -99,10 +99,14 @@ ParquetWriter::ParquetWriter(const Nan::FunctionCallbackInfo<Value>& info) : pw_
   if (!status.ok()) {
     std::stringstream ss;
     ss << "Parquet/Arrow error: " << status.ToString();
-    Nan::ThrowTypeError(Nan::New(ss.str()).ToLocalChecked());
+    Nan::ThrowError(Nan::New(ss.str()).ToLocalChecked());
     return;
   }
-  pw_ = parquet::ParquetFileWriter::Open(fw_, schema);
+  try {
+    pw_ = parquet::ParquetFileWriter::Open(fw_, schema);
+  } catch (const std::exception& e) {
+    Nan::ThrowError(Nan::New(e.what()).ToLocalChecked());
+  }
 }
 
 ParquetWriter::~ParquetWriter() {}
@@ -257,7 +261,7 @@ static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> 
     value = nullptr;
   } else if (val->IsString()) {
     String::Utf8Value val_utf8(val->ToString());
-    input_value.ptr = reinterpret_cast<const uint8_t*>(std::string(*val_utf8).c_str());
+    input_value.ptr = reinterpret_cast<const uint8_t*>(*val_utf8);
     input_value.len = val_utf8.length();
   } else if (val->IsObject()) {
     Local<Object> obj_value = Local<Object>::Cast(val);
