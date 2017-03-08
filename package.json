@@ -23,10 +23,9 @@
   "dependencies": {
     "hexdump-nodejs": "^0.1.0",
     "nan": "^2.5.0",
-    "tap": "^10.3.0",
     "varint": "^5.0.0"
   },
   "devDependencies": {
-    "tap": "^10.0.0"
+    "tap": "^10.3.0"
   }
 }
