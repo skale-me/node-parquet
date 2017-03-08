@@ -26,7 +26,7 @@ NodeJS native addons.
 The standard way of building and installing, provided that above
 depencies are met, is simply to run:
 
-```
+```shell
 npm install
 ```
 
@@ -73,12 +73,14 @@ var data = [
   [  , 1234, false, ],
 ];
 
-var writer = parquet.createWrite('my_file.parquet', schema);
-writer.writeSync(data);
+var writer = new parquet.ParquetWriter('my_file.parquet', schema);
+writer.write(data);
 writer.close();
 ```
 
 ## API reference
+
+The API is not yet considered stable nor complete.
 
 To use this module, one must `require('node-parquet')`
 
@@ -116,6 +118,16 @@ Return an `Object` containing parquet file metadata. The object looks like:
   rows: 500
 }
 ```
+
+#### reader.read(column_number)
+
+This is a low level function, it should not be used directly.
+
+Read and return the next element in the column indicated by `column_number`.
+
+In the case of a non-nested column, a basic value (`Boolean`, `Number`, `String` or `Buffer`) is returned, otherwise, an array of 3 elemnents is returned, where a[0] is the parquet definition level, a[1] the parquet repetition level, and a[2] the basic value. Definition and repetition levels are useful to reconstruct rows of composite, possibly sparse records with nested columns.
+
+* `column_number`: the column number in the row
 
 #### reader.rows([nb_rows])
 
