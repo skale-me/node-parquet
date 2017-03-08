@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.2.1](https://github.com/skale-me/node-parquet/tree/0.2.1) (2017-03-08)
+[Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.0...0.2.1)
+
+**Merged pull requests:**
+
+- fix dependencies [\#17](https://github.com/skale-me/node-parquet/pull/17) ([mvertes](https://github.com/mvertes))
+- README: fix examples, document read\(\) [\#16](https://github.com/skale-me/node-parquet/pull/16) ([mvertes](https://github.com/mvertes))
+
 ## [0.2.0](https://github.com/skale-me/node-parquet/tree/0.2.0) (2017-03-07)
 [Full Changelog](https://github.com/skale-me/node-parquet/compare/0.1.1...0.2.0)
 
