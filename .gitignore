@@ -2,6 +2,7 @@ build/
 build_deps/
 node_modules/
 examples/t1.parquet
+test/test.parquet
 .DS_Store
 .*.swp
 yarn.lock

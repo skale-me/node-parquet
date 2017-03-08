@@ -358,6 +358,8 @@ void ParquetWriter::Write(const Nan::FunctionCallbackInfo<Value>& info) {
         if (val->IsArray()) {
           Local<Array> array = Local<Array>::Cast(val);
           int len = array->Length();
+          if (len < 1)
+            continue;
           type_writer(column_writer, array->Get(0), &maxdef, &zerorep);
           for (int k = 1; k < len; k++) {
             type_writer(column_writer, array->Get(k), &maxdef, &maxrep);
