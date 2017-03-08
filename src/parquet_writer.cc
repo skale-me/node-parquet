@@ -284,10 +284,7 @@ static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> 
   int16_t zerodef = 0;
   int16_t* cdef = def;
 
-  if (val->IsUndefined()) {
-    cdef = &zerodef;
-    value = nullptr;
-  } else if (val->IsString()) {
+  if (val->IsString()) {
     String::Utf8Value val_utf8(val->ToString());
     input_value.ptr = reinterpret_cast<const uint8_t*>(*val_utf8);
     input_value.len = val_utf8.length();
@@ -295,6 +292,9 @@ static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> 
     Local<Object> obj_value = Local<Object>::Cast(val);
     input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
     input_value.len = node::Buffer::Length(obj_value);
+  } else {  // undefined
+    cdef = &zerodef;
+    value = nullptr;
   }
   writer->WriteBatch(1, cdef, rep, value);
 }
@@ -358,8 +358,6 @@ void ParquetWriter::Write(const Nan::FunctionCallbackInfo<Value>& info) {
         if (val->IsArray()) {
           Local<Array> array = Local<Array>::Cast(val);
           int len = array->Length();
-          if (len < 1)
-            continue;
           type_writer(column_writer, array->Get(0), &maxdef, &zerorep);
           for (int k = 1; k < len; k++) {
             type_writer(column_writer, array->Get(k), &maxdef, &maxrep);
