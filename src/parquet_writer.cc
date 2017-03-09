@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include <arrow/io/file.h>
 
@@ -286,10 +287,12 @@ static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> 
 
   if (val->IsString()) {
     String::Utf8Value val_utf8(val->ToString());
-    input_value.ptr = reinterpret_cast<const uint8_t*>(*val_utf8);
-    input_value.len = val_utf8.length();
+    std::string str = std::string(*val_utf8);
+    Local<Object> buf = Nan::CopyBuffer(str.data(), str.length()).ToLocalChecked();
+    input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(buf));
+    input_value.len = node::Buffer::Length(buf);
   } else if (val->IsObject()) {
-    Local<Object> obj_value = Local<Object>::Cast(val);
+    Local<Object> obj_value(val->ToObject());
     input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
     input_value.len = node::Buffer::Length(obj_value);
   } else {  // undefined
