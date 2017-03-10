@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.2.3](https://github.com/skale-me/node-parquet/tree/0.2.3) (2017-03-10)
+[Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.2...0.2.3)
+
+**Merged pull requests:**
+
+- write strings: fix memory problems. [\#19](https://github.com/skale-me/node-parquet/pull/19) ([mvertes](https://github.com/mvertes))
+
 ## [0.2.2](https://github.com/skale-me/node-parquet/tree/0.2.2) (2017-03-08)
 [Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.1...0.2.2)
 
