@@ -178,7 +178,7 @@ void ParquetWriter::Close(const Nan::FunctionCallbackInfo<Value>& info) {
   }
 }
 
-static void write_bool(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_bool(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::BoolWriter* writer = static_cast<parquet::BoolWriter*>(column_writer);
   bool input_value;
   bool* value = &input_value;
@@ -194,7 +194,7 @@ static void write_bool(parquet::ColumnWriter* column_writer, Local<Value> val, i
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-static void write_int32(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_int32(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::Int32Writer* writer = static_cast<parquet::Int32Writer*>(column_writer);
   int32_t input_value;
   int32_t* value = &input_value;
@@ -210,7 +210,7 @@ static void write_int32(parquet::ColumnWriter* column_writer, Local<Value> val, 
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-static void write_int64(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_int64(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::Int64Writer* writer = static_cast<parquet::Int64Writer*>(column_writer);
   int64_t input_value;
   int64_t* value = &input_value;
@@ -226,7 +226,7 @@ static void write_int64(parquet::ColumnWriter* column_writer, Local<Value> val, 
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-static void write_int96(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_int96(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::Int96Writer* writer = static_cast<parquet::Int96Writer*>(column_writer);
   parquet::Int96 input_value;
   parquet::Int96* value = &input_value;
@@ -246,7 +246,7 @@ static void write_int96(parquet::ColumnWriter* column_writer, Local<Value> val, 
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-static void write_float(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_float(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::FloatWriter* writer = static_cast<parquet::FloatWriter*>(column_writer);
   float input_value;
   float* value = &input_value;
@@ -262,7 +262,7 @@ static void write_float(parquet::ColumnWriter* column_writer, Local<Value> val, 
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-static void write_double(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_double(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::DoubleWriter* writer = static_cast<parquet::DoubleWriter*>(column_writer);
   double input_value;
   double* value = &input_value;
@@ -278,7 +278,7 @@ static void write_double(parquet::ColumnWriter* column_writer, Local<Value> val,
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::ByteArrayWriter* writer = static_cast<parquet::ByteArrayWriter*>(column_writer);
   parquet::ByteArray input_value;
   parquet::ByteArray* value = &input_value;
@@ -291,18 +291,23 @@ static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> 
     Local<Object> buf = Nan::CopyBuffer(str.data(), str.length()).ToLocalChecked();
     input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(buf));
     input_value.len = node::Buffer::Length(buf);
-  } else if (val->IsObject()) {
+  } else if (node::Buffer::HasInstance(val)) {
     Local<Object> obj_value(val->ToObject());
     input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
     input_value.len = node::Buffer::Length(obj_value);
-  } else {  // undefined
+  } else if (val->IsUndefined()) {
+    if (is_required)
+      return Nan::ThrowTypeError(Nan::New("a byte array value is required").ToLocalChecked());
     cdef = &zerodef;
     value = nullptr;
+  } else {
+    Nan::ThrowTypeError(Nan::New("Parameter is not a byte array").ToLocalChecked());
   }
+
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-static void write_flba(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep) {
+static void write_flba(parquet::ColumnWriter* column_writer, Local<Value> val, int16_t* def, int16_t* rep, bool is_required) {
   parquet::FixedLenByteArrayWriter* writer = static_cast<parquet::FixedLenByteArrayWriter*>(column_writer);
   parquet::FixedLenByteArray input_value;
   parquet::FixedLenByteArray* value = &input_value;
@@ -319,7 +324,7 @@ static void write_flba(parquet::ColumnWriter* column_writer, Local<Value> val, i
   writer->WriteBatch(1, cdef, rep, value);
 }
 
-typedef void (*writer_t)(parquet::ColumnWriter*, Local<Value>, int16_t*, int16_t*);
+typedef void (*writer_t)(parquet::ColumnWriter*, Local<Value>, int16_t*, int16_t*, bool);
 
 // Table of writer functions, keep same ordering as parquet::Type
 static writer_t type_writers[] = {
@@ -351,6 +356,7 @@ void ParquetWriter::Write(const Nan::FunctionCallbackInfo<Value>& info) {
       int16_t maxdef = descr->max_definition_level();
       int16_t maxrep = descr->max_repetition_level();
       int16_t zerorep = 0;
+      bool is_required = descr->schema_node()->is_required();
       Local<Object> row;
       Local<Value> val;
       writer_t type_writer = type_writers[column_writer->type()];
@@ -361,18 +367,17 @@ void ParquetWriter::Write(const Nan::FunctionCallbackInfo<Value>& info) {
         if (val->IsArray()) {
           Local<Array> array = Local<Array>::Cast(val);
           int len = array->Length();
-          type_writer(column_writer, array->Get(0), &maxdef, &zerorep);
+          type_writer(column_writer, array->Get(0), &maxdef, &zerorep, is_required);
           for (int k = 1; k < len; k++) {
-            type_writer(column_writer, array->Get(k), &maxdef, &maxrep);
+            type_writer(column_writer, array->Get(k), &maxdef, &maxrep, is_required);
           }
         } else {
-            type_writer(column_writer, val, &maxdef, nullptr);
+            type_writer(column_writer, val, &maxdef, nullptr, is_required);
         }
       }
     }
   } catch (const std::exception& e) {
-    Nan::ThrowError(Nan::New(e.what()).ToLocalChecked());
-    return;
+    return Nan::ThrowError(Nan::New(e.what()).ToLocalChecked());
   }
   info.GetReturnValue().Set(Nan::New<Number>(num_rows));
 }
