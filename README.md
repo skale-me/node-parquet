@@ -30,16 +30,47 @@ depencies are met, is simply to run:
 npm install
 ```
 
+From 0.2.4 version, a command line tool called `parquet` is provided.
+It can be installed globally by running `npm install -g`. Note that
+if you install node-parquet this way, you can still use it as a dependency
+module in your local projects by linking (`npm link node-parquet`) which
+avoids the cost of recompiling the complete parquet-cpp library and
+its dependencies.
+
 Otherwise, for developers to build directly from a github clone:
 
 ```shell
 git clone https://github.com/mvertes/node-parquet.git
 cd node-parquet
 git submodule update --init --recursive
-npm install
+npm install [-g]
 ```
 
+After install, the parquet-cpp build directory `build_deps` can be
+removed by running `npm run clean`, recovering all disk space taken
+for building parquet-cpp and its dependencies.
+
 ## Usage
+
+### Command line tool
+
+A command line tool `parquet` is provided. It's quite minimalist
+right now and needs to be improved:
+
+```
+Usage: parquet [options] <command> [<args>]
+
+Command line tool to manipulate parquet files
+
+Commands:
+  cat file       Print file content on standard output
+  head file      Print the first lines of file
+  info file      Print file metadata
+
+Options:
+  -h,--help      Print this help text
+  -V,--version   Print version and exits
+```
 
 ### Reading
 
@@ -199,7 +230,7 @@ writer.write([
 - the native library parquet-cpp does not build on MS-Windows
 - many tests are missing
 - benchmarks are missing
-- neat commmand line tool missing
+- neat commmand line tool missing (one provided since 0.2.4)
 
 Plan is to improve this over time. Contributions are welcome.
 
