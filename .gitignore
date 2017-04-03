@@ -5,4 +5,3 @@ examples/t1.parquet
 test/test.parquet
 .DS_Store
 .*.swp
-yarn.lock

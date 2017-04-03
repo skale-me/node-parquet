@@ -6,7 +6,11 @@
   "scripts": {
     "preinstall": "./build_parquet-cpp.sh",
     "install": "node-gyp rebuild",
+    "clean": "rm -rf build_deps",
     "test": "tap test/*.js"
+  },
+  "bin": {
+    "parquet": "./bin/parquet.js"
   },
   "repository": "skale-me/node-parquet",
   "bugs": {
@@ -22,6 +26,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "hexdump-nodejs": "^0.1.0",
+    "minimist": "^1.2.0",
     "nan": "^2.5.0",
     "varint": "^5.0.0"
   },
