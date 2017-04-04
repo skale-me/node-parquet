@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.2.4](https://github.com/skale-me/node-parquet/tree/0.2.4) (2017-04-04)
+[Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.3...0.2.4)
+
+**Merged pull requests:**
+
+- Update parquet-cpp dependency [\#25](https://github.com/skale-me/node-parquet/pull/25) ([mvertes](https://github.com/mvertes))
+- Add a command line tool parquet [\#24](https://github.com/skale-me/node-parquet/pull/24) ([mvertes](https://github.com/mvertes))
+- Link module against static libraries rather than dynamic ones. [\#23](https://github.com/skale-me/node-parquet/pull/23) ([mvertes](https://github.com/mvertes))
+- Fix issue \#21 where writing an invalid string caused a segmentation fault [\#22](https://github.com/skale-me/node-parquet/pull/22) ([mvertes](https://github.com/mvertes))
+
 ## [0.2.3](https://github.com/skale-me/node-parquet/tree/0.2.3) (2017-03-10)
 [Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.2...0.2.3)
 
