@@ -10,7 +10,7 @@ provides native bindings to the parquet functions from
 
 A pure javascript parquet format driver (still in development) is also provided.
 
-## Build, install
+## Build, install
 
 The native c++ module has the following dependencies which must
 be installed before attempting to build:
@@ -50,7 +50,7 @@ After install, the parquet-cpp build directory `build_deps` can be
 removed by running `npm run clean`, recovering all disk space taken
 for building parquet-cpp and its dependencies.
 
-## Usage
+## Usage
 
 ### Command line tool
 
