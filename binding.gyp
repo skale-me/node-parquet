@@ -23,7 +23,6 @@
 			'-w',
 			'<(module_root_dir)/build_deps/parquet-cpp/release/libparquet.a',
 			'<(module_root_dir)/build_deps/parquet-cpp/arrow_ep/src/arrow_ep-install/lib/libarrow.a',
-			'<(module_root_dir)/build_deps/parquet-cpp/arrow_ep/src/arrow_ep-install/lib/libarrow_io.a',
 			'<(module_root_dir)/build_deps/parquet-cpp/thrift_ep/src/thrift_ep-install/lib/libthrift.a',
 			'<(module_root_dir)/build_deps/parquet-cpp/snappy_ep/src/snappy_ep-install/lib/libsnappy.a',
 			'-L<(module_root_dir)/build_deps/parquet-cpp/brotli_ep/src/brotli_ep-install/lib',
@@ -37,7 +36,6 @@
 		  'libraries': [
 			'<(module_root_dir)/build_deps/parquet-cpp/release/libparquet.a',
 			'<(module_root_dir)/build_deps/parquet-cpp/arrow_ep/src/arrow_ep-install/lib/libarrow.a',
-			'<(module_root_dir)/build_deps/parquet-cpp/arrow_ep/src/arrow_ep-install/lib/libarrow_io.a',
 			'<(module_root_dir)/build_deps/parquet-cpp/thrift_ep/src/thrift_ep-install/lib/libthrift.a',
 			'<(module_root_dir)/build_deps/parquet-cpp/snappy_ep/src/snappy_ep-install/lib/libsnappy.a',
 			'-L<(module_root_dir)/build_deps/parquet-cpp/brotli_ep/src/brotli_ep-install/lib/x86_64-linux-gnu',
