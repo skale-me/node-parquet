@@ -77,7 +77,7 @@ Options:
 The following example shows how to read a `parquet` file:
 
 ```javascript
-var parquet = require('node-parqet');
+var parquet = require('node-parquet');
 
 var reader = new parquet.ParquetReader('my_file.parquet');
 console.log(reader.info());
