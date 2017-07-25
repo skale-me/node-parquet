@@ -6,6 +6,7 @@
   "scripts": {
     "preinstall": "./build_parquet-cpp.sh",
     "install": "node-gyp rebuild",
+    "postinstall": "[ _$NODE_ENV = _production ] && rm -rf build_deps || true",
     "clean": "rm -rf build_deps",
     "test": "tap test/*.js"
   },
