@@ -12,9 +12,10 @@ export ZLIB_STATIC_LIB=$ARROW_EP/zlib_ep/src/zlib_ep-install/lib/libz.a
 
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
-cmake -DPARQUET_BUILD_TESTS=Off \
+cmake -DPARQUET_BUILD_TESTS=OFF \
   -DPARQUET_MINIMAL_DEPENDENCY=ON \
   -DPARQUET_ARROW_LINKAGE="static" \
+  -DPARQUET_BUILD_SHARED=OFF \
   -DCMAKE_BUILD_TYPE=Release \
   ../../deps/parquet-cpp
 make
