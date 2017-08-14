@@ -2,7 +2,7 @@
 
 BUILD_DIR=$PWD/build_deps/parquet-cpp
 ARROW_EP=$BUILD_DIR/arrow_ep-prefix/src/arrow_ep-build
-BROTLI_EP=$ARROW_EP/brotli_ep/src/brotli_ep-install/lib
+BROTLI_EP=$ARROW_EP/brotli_ep-prefix/src/brotli_ep-build
 
 export SNAPPY_STATIC_LIB=$ARROW_EP/snappy_ep/src/snappy_ep-install/lib/libsnappy.a
 export BROTLI_STATIC_LIB_ENC=$BROTLI_EP/libbrotlienc.a
