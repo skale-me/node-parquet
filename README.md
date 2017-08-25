@@ -180,9 +180,11 @@ Construct a new parquet writer object.
       - `"bool"`: boolean value, converted from `Boolean`
       - `"int32"`: 32 bits integer value, converted from `Number`
       - `"int64"`: 64 bits integer value, converted from `Number`
+      - `"timestamp"`: 64 bits integer value, converted from `Date`, with parquet logical type `TIMESTAMP_MILLIS`, the number of milliseconds from the Unix epoch, 00:00:00.000 on 1 January 1970, UTC
       - `"float"`: 32 bits floating number value, converted from `Number`
       - `"double"`: 64 bits floating number value, converted from `Number`
-      - `"byte_array"`: array of bytes, converted from a `String`
+      - `"byte_array"`: array of bytes, converted from a `String` or buffer
+      - `"string"`: array of bytes, converted from a `String`, with parquet logical type `UTF8`
       - `"group"`: array of nested structures, described with a `"schema"` field
   * `"optional"`: `Boolean` indicating if the field can be omitted in a record. Default: `false`.
   * `"repeated"`: `Boolean` indicating if the field can be repeated in a record, thus forming an array. Ignored if not defined within a schema of type `"group"` (schema itself or one of its parent).
@@ -193,7 +195,7 @@ For example, considering the following object: `{ name: "foo", content: [ 1, 2, 
 
 ```javascript
 const schema = {
-  name: { type: "byte_array" },
+  name: { type: "string" },
   content: {
     type: "group",
     repeated: "true",
@@ -224,7 +226,7 @@ writer.write([
 ## Caveats and limitations
 
 - no schema extract at reading yet
-- int64 bigger than 2^53 - 1 are not accaturately represented (big number library like [bignum](https://www.npmjs.com/package/bignum) integration planned)
+- int64 bigger than 2^53 - 1 are not represented accurately (big number library like [bignum](https://www.npmjs.com/package/bignum) integration planned)
 - purejs implementation not complete, although most of metadata is now correctly parsed.
 - read and write are only synchronous
 - the native library parquet-cpp does not build on MS-Windows
