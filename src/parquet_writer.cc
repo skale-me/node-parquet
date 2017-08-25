@@ -62,12 +62,18 @@ static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetiti
       parquet_type = Type::INT32;
     } else if (type_str.compare("int64") == 0) {
       parquet_type = Type::INT64;
+    } else if (type_str.compare("timestamp") == 0) {
+      parquet_type = Type::INT64;
+      logical_type = LogicalType::TIMESTAMP_MILLIS;
     } else if (type_str.compare("int96") == 0) {
       parquet_type = Type::INT96;
     } else if (type_str.compare("float") == 0) {
       parquet_type = Type::FLOAT;
     } else if (type_str.compare("double") == 0) {
       parquet_type = Type::DOUBLE;
+    } else if (type_str.compare("string") == 0) {
+      parquet_type = Type::BYTE_ARRAY;
+      logical_type = LogicalType::UTF8;
     } else if (type_str.compare("byte_array") == 0) {
       parquet_type = Type::BYTE_ARRAY;
     } else if (type_str.compare("fixed_len_byte_array") == 0) {
