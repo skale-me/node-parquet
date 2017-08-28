@@ -140,8 +140,8 @@ void reader<parquet::ByteArrayReader*, parquet::ByteArray, Number>(std::shared_p
   parquet::ByteArrayReader* reader = static_cast<parquet::ByteArrayReader*>(column_reader.get());
   parquet::ByteArray value;
   int64_t value_read;
-  int16_t definition;
-  int16_t repetition;
+  int16_t definition = maxdef;
+  int16_t repetition = maxrep;
   if (!reader->HasNext())
     return;
   reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
