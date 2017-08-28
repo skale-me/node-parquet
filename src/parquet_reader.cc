@@ -94,8 +94,8 @@ void reader(std::shared_ptr<parquet::ColumnReader> column_reader, int16_t maxdef
   T reader = static_cast<T>(column_reader.get());
   U value;
   int64_t value_read;
-  int16_t definition;
-  int16_t repetition;
+  int16_t definition = maxdef;
+  int16_t repetition = maxrep;
   if (!reader->HasNext())
     return;
   reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
@@ -117,8 +117,8 @@ void reader<parquet::Int96Reader*, parquet::Int96, Number>(std::shared_ptr<parqu
   parquet::Int96Reader* reader = static_cast<parquet::Int96Reader*>(column_reader.get());
   parquet::Int96 value;
   int64_t value_read;
-  int16_t definition;
-  int16_t repetition;
+  int16_t definition = maxdef;
+  int16_t repetition = maxrep;
   if (!reader->HasNext())
     return;
   reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
@@ -163,8 +163,8 @@ void reader<parquet::FixedLenByteArrayReader*, parquet::FixedLenByteArray, Numbe
   parquet::FixedLenByteArrayReader* reader = static_cast<parquet::FixedLenByteArrayReader*>(column_reader.get());
   parquet::FixedLenByteArray value;
   int64_t value_read;
-  int16_t definition;
-  int16_t repetition;
+  int16_t definition = maxdef;
+  int16_t repetition = maxrep;
   if (!reader->HasNext())
     return;
   reader->ReadBatch(1, &definition, &repetition, &value, &value_read);
