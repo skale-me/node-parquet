@@ -178,7 +178,7 @@ void ParquetWriter::Close(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetWriter* obj = ObjectWrap::Unwrap<ParquetWriter>(info.Holder());
   try {
     obj->pw_->Close();
-    obj->fw_->Close();
+    arrow::Status status = obj->fw_->Close();
   } catch (const std::exception& e) {
     Nan::ThrowError(Nan::New(e.what()).ToLocalChecked());
   }
