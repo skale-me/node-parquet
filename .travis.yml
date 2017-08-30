@@ -1,5 +1,4 @@
 os:
-  - linux
   - osx
 
 sudo: required
@@ -11,9 +10,6 @@ node_js:
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev;
-    fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      brew install boost;
     fi
 
 env:
