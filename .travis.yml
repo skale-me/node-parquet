@@ -1,18 +1,18 @@
-sudo: required
+os:
+  - linux
+  - osx
+
 dist: trusty
+sudo: required
 language: node_js
 node_js:
-  - "node"
-  - "4"
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-4.9
+  - "8"
+
 before_install:
-  - sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev;
+    fi
+
 env:
   global:
-    - CXX=g++-4.9
     - NODE_ENV=development
