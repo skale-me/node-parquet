@@ -7,11 +7,8 @@ node_js:
   - "4"
 
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo apt-get update -q
-  - sudo apt-get install -y g++-4.9 bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev
+  - sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev
 
 env:
   global:
-    - CXX=g++-4.9
     - NODE_ENV=development
