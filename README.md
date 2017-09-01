@@ -15,10 +15,14 @@ A pure javascript parquet format driver (still in development) is also provided.
 The native c++ module has the following dependencies which must
 be installed before attempting to build:
 
-- g++ and gcc version >= 4.8
-- cmake > 2.8.6
-- boost
-- on MacOSX: thrift version >= 0.7
+- Linux:
+  - g++ and gcc version >= 4.8
+  - cmake > 2.8.6
+  - boost
+- MacOSX:
+  - Xcode (at least command line tools)
+  - boost (`brew install boost`)
+- MS-Windows: not supported (contributions welcome)
 
 Note that you need also python2 and c++/make toolchain for building
 NodeJS native addons.
