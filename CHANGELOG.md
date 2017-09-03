@@ -1,5 +1,32 @@
 # Change Log
 
+## [0.2.5](https://github.com/skale-me/node-parquet/tree/0.2.5) (2017-09-03)
+[Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.4...0.2.5)
+
+**Fixed bugs:**
+
+- ParquetWriter: memory fault when attempt to write an object instead of a string [\#21](https://github.com/skale-me/node-parquet/issues/21)
+
+**Closed issues:**
+
+- fatal error: 'cstdint' file not found [\#28](https://github.com/skale-me/node-parquet/issues/28)
+
+**Merged pull requests:**
+
+- improve README [\#42](https://github.com/skale-me/node-parquet/pull/42) ([mvertes](https://github.com/mvertes))
+- improve tests, check read data against original used for write [\#41](https://github.com/skale-me/node-parquet/pull/41) ([mvertes](https://github.com/mvertes))
+- travis CI: build and test on linux and MacOSX [\#40](https://github.com/skale-me/node-parquet/pull/40) ([mvertes](https://github.com/mvertes))
+- remove obsolete non-working code [\#39](https://github.com/skale-me/node-parquet/pull/39) ([mvertes](https://github.com/mvertes))
+- writer: fix compile warning [\#38](https://github.com/skale-me/node-parquet/pull/38) ([mvertes](https://github.com/mvertes))
+- reader: fix uninitialized variables. Should correct \#32. [\#37](https://github.com/skale-me/node-parquet/pull/37) ([mvertes](https://github.com/mvertes))
+- Add 'string' and 'timestamp' logical types [\#36](https://github.com/skale-me/node-parquet/pull/36) ([mvertes](https://github.com/mvertes))
+- fix build of static lib dependencies [\#34](https://github.com/skale-me/node-parquet/pull/34) ([mvertes](https://github.com/mvertes))
+- update to parquet-cpp-1.2.0 [\#33](https://github.com/skale-me/node-parquet/pull/33) ([mvertes](https://github.com/mvertes))
+- post-install: clean up compiled dependency libs in production mode [\#31](https://github.com/skale-me/node-parquet/pull/31) ([mvertes](https://github.com/mvertes))
+- fixes typo [\#29](https://github.com/skale-me/node-parquet/pull/29) ([danielsan](https://github.com/danielsan))
+- update parquet-cpp dependency [\#27](https://github.com/skale-me/node-parquet/pull/27) ([mvertes](https://github.com/mvertes))
+- Fix headings so they're recognised as valid markdown [\#26](https://github.com/skale-me/node-parquet/pull/26) ([spinningarrow](https://github.com/spinningarrow))
+
 ## [0.2.4](https://github.com/skale-me/node-parquet/tree/0.2.4) (2017-04-04)
 [Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.3...0.2.4)
 
