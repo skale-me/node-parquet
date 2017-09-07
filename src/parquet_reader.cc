@@ -98,7 +98,11 @@ static void walkSchema(const NodePtr& node, Local<Object> res) {
     obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("int32").ToLocalChecked());
     break;
   case Type::INT64:
-    obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("int64").ToLocalChecked());
+    if (node->logical_type() == LogicalType::TIMESTAMP_MILLIS) {
+      obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("timestamp").ToLocalChecked());
+    } else {
+      obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("int64").ToLocalChecked());
+    }
     break;
   case Type::INT96:
     obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("int96").ToLocalChecked());
