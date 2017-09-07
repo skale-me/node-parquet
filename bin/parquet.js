@@ -67,5 +67,5 @@ function die(err) {
 
 function info(file) {
   const reader = new parquet.ParquetReader(file);
-  console.log(reader.info());
+  process.stdout.write(JSON.stringify(reader.info(), null, 2) + '\n');
 }
