@@ -1,5 +1,7 @@
 #!/bin/sh -e
 
+# Copyright 2017 Luca-SAS, licensed under the Apache License 2.0
+
 BUILD_DIR=$PWD/build_deps/parquet-cpp
 ARROW_EP=$BUILD_DIR/arrow_ep-prefix/src/arrow_ep-build
 BROTLI_EP=$ARROW_EP/brotli_ep-prefix/src/brotli_ep-build
