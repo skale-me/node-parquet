@@ -1,3 +1,5 @@
+// Copyright 2017 Luca-SAS, licensed under the Apache License 2.0
+
 'use strict';
 
 const parquet = require('./build/Release/parquet.node');
