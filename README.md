@@ -19,6 +19,8 @@ be installed before attempting to build:
   - g++ and gcc version >= 4.8
   - cmake > 2.8.6
   - boost
+  - bison
+  - flex
 - MacOSX:
   - Xcode (at least command line tools)
   - boost (`brew install boost`)
