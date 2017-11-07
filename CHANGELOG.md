@@ -1,5 +1,22 @@
 # Change Log
 
+## [0.2.6](https://github.com/skale-me/node-parquet/tree/0.2.6) (2017-11-07)
+[Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.5...0.2.6)
+
+**Closed issues:**
+
+- arrow/util/bit-util.h: No such file or directory [\#47](https://github.com/skale-me/node-parquet/issues/47)
+- Integers converted to undefined [\#32](https://github.com/skale-me/node-parquet/issues/32)
+
+**Merged pull requests:**
+
+- update to parquet-cpp-1.3.1 [\#51](https://github.com/skale-me/node-parquet/pull/51) ([mvertes](https://github.com/mvertes))
+- bin/parquet: fix handling of numeric filenames, fix \#49 [\#50](https://github.com/skale-me/node-parquet/pull/50) ([mvertes](https://github.com/mvertes))
+- List more requirements for linux [\#48](https://github.com/skale-me/node-parquet/pull/48) ([terebentina](https://github.com/terebentina))
+- Add license/copyright header. No functional change [\#45](https://github.com/skale-me/node-parquet/pull/45) ([mvertes](https://github.com/mvertes))
+- bin/parquet.js: output info in JSON format [\#44](https://github.com/skale-me/node-parquet/pull/44) ([mvertes](https://github.com/mvertes))
+- reader: extract schema [\#43](https://github.com/skale-me/node-parquet/pull/43) ([mvertes](https://github.com/mvertes))
+
 ## [0.2.5](https://github.com/skale-me/node-parquet/tree/0.2.5) (2017-09-03)
 [Full Changelog](https://github.com/skale-me/node-parquet/compare/0.2.4...0.2.5)
 
