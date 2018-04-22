@@ -9,9 +9,10 @@ node_js:
   - "8"
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev;
-    fi
+  - case "$TRAVIS_OS_NAME" in
+    linux) sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev ;;
+    osx) brew install bison; brew link --force bison ;;
+    esac
 
 env:
   global:
