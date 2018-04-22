@@ -3,5 +3,6 @@ build_deps/
 node_modules/
 examples/t1.parquet
 test/test.parquet
+test/t1.parquet
 .DS_Store
 .*.swp

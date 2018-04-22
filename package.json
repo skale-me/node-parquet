@@ -28,10 +28,10 @@
   "dependencies": {
     "hexdump-nodejs": "^0.1.0",
     "minimist": "^1.2.0",
-    "nan": "^2.5.0",
+    "nan": "^2.10.0",
     "varint": "^5.0.0"
   },
   "devDependencies": {
-    "tap": "^10.3.0"
+    "tap": "^11.1.4"
   }
 }

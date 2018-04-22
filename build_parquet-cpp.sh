@@ -10,7 +10,9 @@ export SNAPPY_STATIC_LIB=$ARROW_EP/snappy_ep/src/snappy_ep-install/lib/libsnappy
 export BROTLI_STATIC_LIB_ENC=$BROTLI_EP/libbrotlienc.a
 export BROTLI_STATIC_LIB_DEC=$BROTLI_EP/libbrotlidec.a
 export BROTLI_STATIC_LIB_COMMON=$BROTLI_EP/libbrotlicommon.a
-export ZLIB_STATIC_LIB=$ARROW_EP/zlib_ep/src/zlib_ep-install/lib/libz.a
+export ZLIB_STATIC_LIB=$ARROW_EP/zlib_ep-prefix/src/zlib_ep-build/libz.a
+export LZ4_STATIC_LIB=$ARROW_EP/lz4_ep-prefix/src/lz4_ep/lib/liblz4.a
+export ZSTD_STATIC_LIB=$ARROW_EP/zstd_ep-prefix/src/zstd_ep/lib/libzstd.a
 
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
