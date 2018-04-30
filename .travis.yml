@@ -11,7 +11,7 @@ node_js:
 before_install:
   - case "$TRAVIS_OS_NAME" in
     linux) sudo apt-get install -y bison flex libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-regex-dev ;;
-    osx) brew install bison; brew link --force bison ;;
+    osx) brew install -f bison ;;
     esac
 
 env:
