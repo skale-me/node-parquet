@@ -31,7 +31,7 @@ ParquetReader::ParquetReader(const Nan::FunctionCallbackInfo<Value>& info) : par
     Nan::ThrowTypeError("wrong argument");
     return;
   }
-  String::Utf8Value param1(info[0]->ToString());
+  String::Utf8Value param1(v8::Isolate::GetCurrent(), info[0]->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
   std::string from = std::string(*param1);
 
   try {
@@ -60,8 +60,8 @@ void ParquetReader::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(tpl, "read", Read);
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
-  constructor.Reset(tpl->GetFunction());
-  exports->Set(Nan::New("ParquetReader").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
+  Nan::Set(exports, Nan::New("ParquetReader").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
 }
 
 void ParquetReader::New(const Nan::FunctionCallbackInfo<Value>& info) {
@@ -80,9 +80,9 @@ void ParquetReader::NewInstance(const Nan::FunctionCallbackInfo<Value>& info) {
 // Walk the parquet schema tree to recursively build a javascript object
 static void walkSchema(const NodePtr& node, Local<Object> res) {
   Local<Object> obj = Nan::New<Object>();
-  res->Set(Nan::New(node->name().c_str()).ToLocalChecked(), obj);
+  Nan::Set(res, Nan::New(node->name().c_str()).ToLocalChecked(), obj);
   if (node->is_optional()) {
-    obj->Set(Nan::New("optional").ToLocalChecked(), Nan::New<Boolean>(node->is_optional()));
+    Nan::Set(obj, Nan::New("optional").ToLocalChecked(), Nan::New<Boolean>(node->is_optional()));
   }
   if (node->is_group()) {
     const GroupNode* group = static_cast<const GroupNode*>(node.get());
@@ -94,36 +94,36 @@ static void walkSchema(const NodePtr& node, Local<Object> res) {
   const PrimitiveNode* primitive = static_cast<const PrimitiveNode*>(node.get());
   switch (primitive->physical_type()) {
   case Type::BOOLEAN:
-    obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("bool").ToLocalChecked());
+    Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("bool").ToLocalChecked());
     break;
   case Type::INT32:
-    obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("int32").ToLocalChecked());
+    Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("int32").ToLocalChecked());
     break;
   case Type::INT64:
     if (node->logical_type() == LogicalType::TIMESTAMP_MILLIS) {
-      obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("timestamp").ToLocalChecked());
+      Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("timestamp").ToLocalChecked());
     } else {
-      obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("int64").ToLocalChecked());
+      Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("int64").ToLocalChecked());
     }
     break;
   case Type::INT96:
-    obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("int96").ToLocalChecked());
+    Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("int96").ToLocalChecked());
     break;
   case Type::FLOAT:
-    obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("float").ToLocalChecked());
+    Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("float").ToLocalChecked());
     break;
   case Type::DOUBLE:
-    obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("double").ToLocalChecked());
+    Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("double").ToLocalChecked());
     break;
   case Type::BYTE_ARRAY:
     if (node->logical_type() == LogicalType::UTF8) {
-      obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("string").ToLocalChecked());
+      Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("string").ToLocalChecked());
     } else {
-      obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("byte_array").ToLocalChecked());
+      Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("byte_array").ToLocalChecked());
     }
     break;
   case Type::FIXED_LEN_BYTE_ARRAY:
-    obj->Set(Nan::New("type").ToLocalChecked(), Nan::New("flba").ToLocalChecked());
+    Nan::Set(obj, Nan::New("type").ToLocalChecked(), Nan::New("flba").ToLocalChecked());
     break;
   }
 }
@@ -135,11 +135,11 @@ void ParquetReader::Info(const Nan::FunctionCallbackInfo<Value>& info) {
   std::string s(file_metadata->created_by());
   const NodePtr root = file_metadata->schema()->schema_root();
 
-  res->Set(Nan::New("version").ToLocalChecked(), Nan::New<Number>(file_metadata->version()));
-  res->Set(Nan::New("createdBy").ToLocalChecked(), Nan::New(s.c_str()).ToLocalChecked());
-  res->Set(Nan::New("rowGroups").ToLocalChecked(), Nan::New<Number>(file_metadata->num_row_groups()));
-  res->Set(Nan::New("columns").ToLocalChecked(), Nan::New<Number>(file_metadata->num_columns()));
-  res->Set(Nan::New("rows").ToLocalChecked() , Nan::New<Number>(file_metadata->num_rows()));
+  Nan::Set(res, Nan::New("version").ToLocalChecked(), Nan::New<Number>(file_metadata->version()));
+  Nan::Set(res, Nan::New("createdBy").ToLocalChecked(), Nan::New(s.c_str()).ToLocalChecked());
+  Nan::Set(res, Nan::New("rowGroups").ToLocalChecked(), Nan::New<Number>(file_metadata->num_row_groups()));
+  Nan::Set(res, Nan::New("columns").ToLocalChecked(), Nan::New<Number>(file_metadata->num_columns()));
+  Nan::Set(res, Nan::New("rows").ToLocalChecked() , Nan::New<Number>(file_metadata->num_rows()));
   walkSchema(root, res);
 
   info.GetReturnValue().Set(res);
@@ -166,10 +166,10 @@ void reader(std::shared_ptr<parquet::ColumnReader> column_reader, int16_t maxdef
     return;
   }
   Local<Array> array = Nan::New<Array>(3);
-  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
-  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  Nan::Set(array, Nan::New<Number>(0), Nan::New<Number>(definition));
+  Nan::Set(array, Nan::New<Number>(1), Nan::New<Number>(repetition));
   if (definition == maxdef)
-    array->Set(Nan::New<Number>(2), Nan::New<V>(value));
+    Nan::Set(array, Nan::New<Number>(2), Nan::New<V>(value));
   info.GetReturnValue().Set(array);
 }
 
@@ -189,10 +189,10 @@ void reader<parquet::Int96Reader*, parquet::Int96, Number>(std::shared_ptr<parqu
     return;
   }
   Local<Array> array = Nan::New<Array>(3);
-  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
-  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  Nan::Set(array, Nan::New<Number>(0), Nan::New<Number>(definition));
+  Nan::Set(array, Nan::New<Number>(1), Nan::New<Number>(repetition));
   if (definition == maxdef)
-    array->Set(Nan::New<Number>(2), Nan::CopyBuffer((char*)value.value, 12).ToLocalChecked());
+    Nan::Set(array, Nan::New<Number>(2), Nan::CopyBuffer((char*)value.value, 12).ToLocalChecked());
   info.GetReturnValue().Set(array);
 }
 
@@ -212,10 +212,10 @@ void reader<parquet::ByteArrayReader*, parquet::ByteArray, Number>(std::shared_p
     return;
   }
   Local<Array> array = Nan::New<Array>(3);
-  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
-  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  Nan::Set(array, Nan::New<Number>(0), Nan::New<Number>(definition));
+  Nan::Set(array, Nan::New<Number>(1), Nan::New<Number>(repetition));
   if (definition == maxdef)
-    array->Set(Nan::New<Number>(2), Nan::New((char*)value.ptr, value.len).ToLocalChecked());
+    Nan::Set(array, Nan::New<Number>(2), Nan::New((char*)value.ptr, value.len).ToLocalChecked());
   info.GetReturnValue().Set(array);
 }
 
@@ -235,10 +235,10 @@ void reader<parquet::FixedLenByteArrayReader*, parquet::FixedLenByteArray, Numbe
     return;
   }
   Local<Array> array = Nan::New<Array>(3);
-  array->Set(Nan::New<Number>(0), Nan::New<Number>(definition));
-  array->Set(Nan::New<Number>(1), Nan::New<Number>(repetition));
+  Nan::Set(array, Nan::New<Number>(0), Nan::New<Number>(definition));
+  Nan::Set(array, Nan::New<Number>(1), Nan::New<Number>(repetition));
   if (definition == maxdef)
-    array->Set(Nan::New<Number>(2), Nan::New((char*)value.ptr, 1).ToLocalChecked());
+    Nan::Set(array, Nan::New<Number>(2), Nan::New((char*)value.ptr, 1).ToLocalChecked());
   info.GetReturnValue().Set(array);
 }
 
@@ -261,7 +261,7 @@ void ParquetReader::Read(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
 
   try {
-    int col = info[0]->IntegerValue();
+    int col = info[0]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     std::shared_ptr<parquet::ColumnReader> column_reader = obj->column_readers_[col];
     const parquet::ColumnDescriptor* descr = column_reader->descr();
     reader_t type_reader = type_readers[column_reader->type()];

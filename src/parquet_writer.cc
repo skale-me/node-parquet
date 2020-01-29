@@ -29,18 +29,18 @@ using v8::Value;
 
 static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetition, Local<Object> obj) {
   parquet::schema::NodeVector fields;
-  Local<Array> properties = obj->GetOwnPropertyNames();
+  Local<Array> properties = obj->GetOwnPropertyNames(Nan::GetCurrentContext()).ToLocalChecked();
   int len = properties->Length();
 
   for (int i = 0; i < len; i++) {
-    Local<Value> key = properties->Get(i);
-    Local<Object> value = Local<Object>::Cast(obj->Get(key));
-    String::Utf8Value key_utf8(key->ToString());
-    Local<Value> type = value->Get(Nan::New("type").ToLocalChecked());
-    Local<Value> optional = value->Get(Nan::New("optional").ToLocalChecked());
-    Local<Value> repeat = value->Get(Nan::New("repeat").ToLocalChecked());
+    Local<Value> key = Nan::Get(properties, i).ToLocalChecked();
+    Local<Object> value = Local<Object>::Cast(Nan::Get(obj, key).ToLocalChecked());
+    String::Utf8Value key_utf8(v8::Isolate::GetCurrent(), key->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
+    Local<Value> type = Nan::Get(value, Nan::New("type").ToLocalChecked()).ToLocalChecked();
+    Local<Value> optional = Nan::Get(value, Nan::New("optional").ToLocalChecked()).ToLocalChecked();
+    Local<Value> repeat = Nan::Get(value, Nan::New("repeat").ToLocalChecked()).ToLocalChecked();
     Local<Object> schema;
-    String::Utf8Value type_utf8(type->ToString());
+    String::Utf8Value type_utf8(v8::Isolate::GetCurrent(), type->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
     std::string type_str = std::string(*type_utf8);
     std::string key_str = std::string(*key_utf8);
     Type::type parquet_type = Type::BOOLEAN;
@@ -48,10 +48,10 @@ static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetiti
     Repetition::type repetition;
     Node::type node_type = Node::PRIMITIVE;
 
-    if (optional->BooleanValue()) {
+    if (optional->ToBoolean(Nan::GetCurrentContext()).ToLocalChecked()->Value()) {
       repetition = Repetition::OPTIONAL;
     } else {
-      if (repeat->BooleanValue()) {
+      if (repeat->ToBoolean(Nan::GetCurrentContext()).ToLocalChecked()->Value()) {
         repetition = Repetition::REPEATED;
       } else {
         repetition = Repetition::REQUIRED;
@@ -87,7 +87,7 @@ static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetiti
       logical_type = LogicalType::LIST;
     }
     if (node_type == Node::GROUP) {
-      schema = Local<Object>::Cast(value->Get(Nan::New("schema").ToLocalChecked()));
+      schema = Local<Object>::Cast(Nan::Get(value, Nan::New("schema").ToLocalChecked()).ToLocalChecked());
       fields.push_back(SetupSchema(key_str, repetition, schema));
     } else {
       fields.push_back(PrimitiveNode::Make(key_str, repetition, parquet_type, logical_type));
@@ -109,12 +109,12 @@ ParquetWriter::ParquetWriter(const Nan::FunctionCallbackInfo<Value>& info) : pw_
     Nan::ThrowTypeError("second argument is not an object");
     return;
   }
-  String::Utf8Value param1(info[0]->ToString());
-  String::Utf8Value param3(info[2]->ToString());
+  String::Utf8Value param1(v8::Isolate::GetCurrent(), info[0]->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
+  String::Utf8Value param3(v8::Isolate::GetCurrent(), info[2]->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
   Local<Object> param2 = Local<Object>::Cast(info[1]);
   std::shared_ptr<GroupNode> schema = std::static_pointer_cast<GroupNode>(SetupSchema("schema", Repetition::REQUIRED, param2));
   arrow::Status status = arrow::io::FileOutputStream::Open(std::string(*param1), &fw_);
-  ncols_ = param2->GetOwnPropertyNames()->Length();
+  ncols_ = param2->GetOwnPropertyNames(Nan::GetCurrentContext()).ToLocalChecked()->Length();
   Compression::type compression;
   std::string comp_str(*param3);
   if (comp_str.compare("snappy") == 0) {
@@ -159,8 +159,8 @@ void ParquetWriter::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(tpl, "write", Write);
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
-  constructor.Reset(tpl->GetFunction());
-  exports->Set(Nan::New("ParquetWriter").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
+  Nan::Set(exports, Nan::New("ParquetWriter").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
 }
 
 void ParquetWriter::New(const Nan::FunctionCallbackInfo<Value>& info) {
@@ -197,7 +197,7 @@ static void write_bool(parquet::ColumnWriter* column_writer, Local<Value> val, i
     cdef = &zerodef;
     value = nullptr;
   } else {
-    input_value = val->BooleanValue();
+    input_value = val->ToBoolean(Nan::GetCurrentContext()).ToLocalChecked()->Value();
   }
   writer->WriteBatch(1, cdef, rep, value);
 }
@@ -213,7 +213,7 @@ static void write_int32(parquet::ColumnWriter* column_writer, Local<Value> val, 
     cdef = &zerodef;
     value = nullptr;
   } else {
-    input_value = val->Int32Value();
+    input_value = val->ToInt32(Nan::GetCurrentContext()).ToLocalChecked()->Value();
   }
   writer->WriteBatch(1, cdef, rep, value);
 }
@@ -229,7 +229,7 @@ static void write_int64(parquet::ColumnWriter* column_writer, Local<Value> val, 
     cdef = &zerodef;
     value = nullptr;
   } else {
-    input_value = val->IntegerValue();
+    input_value = val->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
   }
   writer->WriteBatch(1, cdef, rep, value);
 }
@@ -265,7 +265,7 @@ static void write_float(parquet::ColumnWriter* column_writer, Local<Value> val, 
     cdef = &zerodef;
     value = nullptr;
   } else {
-    input_value = val->NumberValue();
+    input_value = val->ToNumber(Nan::GetCurrentContext()).ToLocalChecked()->Value();
   }
   writer->WriteBatch(1, cdef, rep, value);
 }
@@ -281,7 +281,7 @@ static void write_double(parquet::ColumnWriter* column_writer, Local<Value> val,
     cdef = &zerodef;
     value = nullptr;
   } else {
-    input_value = val->NumberValue();
+    input_value = val->ToNumber(Nan::GetCurrentContext()).ToLocalChecked()->Value();
   }
   writer->WriteBatch(1, cdef, rep, value);
 }
@@ -294,13 +294,13 @@ static void write_byte_array(parquet::ColumnWriter* column_writer, Local<Value> 
   int16_t* cdef = def;
 
   if (val->IsString()) {
-    String::Utf8Value val_utf8(val->ToString());
+    String::Utf8Value val_utf8(v8::Isolate::GetCurrent(), val->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
     std::string str = std::string(*val_utf8);
     Local<Object> buf = Nan::CopyBuffer(str.data(), str.length()).ToLocalChecked();
     input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(buf));
     input_value.len = node::Buffer::Length(buf);
   } else if (node::Buffer::HasInstance(val)) {
-    Local<Object> obj_value(val->ToObject());
+    Local<Object> obj_value(val->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     input_value.ptr = reinterpret_cast<const uint8_t*>(node::Buffer::Data(obj_value));
     input_value.len = node::Buffer::Length(obj_value);
   } else if (val->IsUndefined()) {
@@ -370,14 +370,14 @@ void ParquetWriter::Write(const Nan::FunctionCallbackInfo<Value>& info) {
       writer_t type_writer = type_writers[column_writer->type()];
 
       for (int j = 0; j < num_rows; j++) {
-        row = Local<Array>::Cast(input->Get(j));
-        val = row->Get(i);
+        row = Local<Array>::Cast(Nan::Get(input, j).ToLocalChecked());
+        val = Nan::Get(row, i).ToLocalChecked();
         if (val->IsArray()) {
           Local<Array> array = Local<Array>::Cast(val);
           int len = array->Length();
-          type_writer(column_writer, array->Get(0), &maxdef, &zerorep, is_required);
+          type_writer(column_writer, Nan::Get(array, 0).ToLocalChecked(), &maxdef, &zerorep, is_required);
           for (int k = 1; k < len; k++) {
-            type_writer(column_writer, array->Get(k), &maxdef, &maxrep, is_required);
+            type_writer(column_writer, Nan::Get(array, k).ToLocalChecked(), &maxdef, &maxrep, is_required);
           }
         } else {
             type_writer(column_writer, val, &maxdef, nullptr, is_required);
