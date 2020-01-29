@@ -229,7 +229,7 @@ static void write_int64(parquet::ColumnWriter* column_writer, Local<Value> val, 
     cdef = &zerodef;
     value = nullptr;
   } else {
-    input_value = val->ToInt32(Nan::GetCurrentContext()).ToLocalChecked()->Value();
+    input_value = val->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
   }
   writer->WriteBatch(1, cdef, rep, value);
 }
