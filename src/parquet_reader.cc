@@ -31,7 +31,7 @@ ParquetReader::ParquetReader(const Nan::FunctionCallbackInfo<Value>& info) : par
     Nan::ThrowTypeError("wrong argument");
     return;
   }
-  String::Utf8Value param1(info[0]->ToString());
+  String::Utf8Value param1(v8::Isolate::GetCurrent(), info[0]->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
   std::string from = std::string(*param1);
 
   try {
@@ -60,8 +60,8 @@ void ParquetReader::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(tpl, "read", Read);
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
-  constructor.Reset(tpl->GetFunction());
-  exports->Set(Nan::New("ParquetReader").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
+  exports->Set(Nan::New("ParquetReader").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
 }
 
 void ParquetReader::New(const Nan::FunctionCallbackInfo<Value>& info) {
@@ -261,7 +261,7 @@ void ParquetReader::Read(const Nan::FunctionCallbackInfo<Value>& info) {
   ParquetReader* obj = ObjectWrap::Unwrap<ParquetReader>(info.Holder());
 
   try {
-    int col = info[0]->IntegerValue();
+    int col = info[0]->ToInt32(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     std::shared_ptr<parquet::ColumnReader> column_reader = obj->column_readers_[col];
     const parquet::ColumnDescriptor* descr = column_reader->descr();
     reader_t type_reader = type_readers[column_reader->type()];
