@@ -33,12 +33,12 @@ static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetiti
   int len = properties->Length();
 
   for (int i = 0; i < len; i++) {
-    Local<Value> key = properties->Get(i);
-    Local<Object> value = Local<Object>::Cast(obj->Get(key));
+    Local<Value> key = Nan::Get(properties, i).ToLocalChecked();
+    Local<Object> value = Local<Object>::Cast(Nan::Get(obj, key).ToLocalChecked());
     String::Utf8Value key_utf8(v8::Isolate::GetCurrent(), key->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
-    Local<Value> type = value->Get(Nan::New("type").ToLocalChecked());
-    Local<Value> optional = value->Get(Nan::New("optional").ToLocalChecked());
-    Local<Value> repeat = value->Get(Nan::New("repeat").ToLocalChecked());
+    Local<Value> type = Nan::Get(value, Nan::New("type").ToLocalChecked()).ToLocalChecked();
+    Local<Value> optional = Nan::Get(value, Nan::New("optional").ToLocalChecked()).ToLocalChecked();
+    Local<Value> repeat = Nan::Get(value, Nan::New("repeat").ToLocalChecked()).ToLocalChecked();
     Local<Object> schema;
     String::Utf8Value type_utf8(v8::Isolate::GetCurrent(), type->ToString(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>()));
     std::string type_str = std::string(*type_utf8);
@@ -87,7 +87,7 @@ static NodePtr SetupSchema(std::string root_name, Repetition::type root_repetiti
       logical_type = LogicalType::LIST;
     }
     if (node_type == Node::GROUP) {
-      schema = Local<Object>::Cast(value->Get(Nan::New("schema").ToLocalChecked()));
+      schema = Local<Object>::Cast(Nan::Get(value, Nan::New("schema").ToLocalChecked()).ToLocalChecked());
       fields.push_back(SetupSchema(key_str, repetition, schema));
     } else {
       fields.push_back(PrimitiveNode::Make(key_str, repetition, parquet_type, logical_type));
@@ -160,7 +160,7 @@ void ParquetWriter::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
   constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
-  exports->Set(Nan::New("ParquetWriter").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
+  Nan::Set(exports, Nan::New("ParquetWriter").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
 }
 
 void ParquetWriter::New(const Nan::FunctionCallbackInfo<Value>& info) {
@@ -370,14 +370,14 @@ void ParquetWriter::Write(const Nan::FunctionCallbackInfo<Value>& info) {
       writer_t type_writer = type_writers[column_writer->type()];
 
       for (int j = 0; j < num_rows; j++) {
-        row = Local<Array>::Cast(input->Get(j));
-        val = row->Get(i);
+        row = Local<Array>::Cast(Nan::Get(input, j).ToLocalChecked());
+        val = Nan::Get(row, i).ToLocalChecked();
         if (val->IsArray()) {
           Local<Array> array = Local<Array>::Cast(val);
           int len = array->Length();
-          type_writer(column_writer, array->Get(0), &maxdef, &zerorep, is_required);
+          type_writer(column_writer, Nan::Get(array, 0).ToLocalChecked(), &maxdef, &zerorep, is_required);
           for (int k = 1; k < len; k++) {
-            type_writer(column_writer, array->Get(k), &maxdef, &maxrep, is_required);
+            type_writer(column_writer, Nan::Get(array, k).ToLocalChecked(), &maxdef, &maxrep, is_required);
           }
         } else {
             type_writer(column_writer, val, &maxdef, nullptr, is_required);
